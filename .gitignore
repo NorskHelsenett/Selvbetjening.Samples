@@ -1,0 +1,63 @@
+## editors
+/.idea
+/.vscode/solution-explorer
+
+## vs
+/.vs
+bin
+obj
+*.suo
+*.user
+Client/wwwroot/*
+!Client/wwwroot/.gitkeep
+
+## system files
+.DS_Store
+
+## npm
+**/node_modules/
+**/npm-debug.log
+
+## terraform
+**/.terraform/
+kubeconfig
+*-azure.tfvars
+
+## testing
+reports/
+coverage/
+coverage.cobertura.xml
+coverage.opencover.xml
+*.trx
+test-results/
+
+## temp folders
+**/.tmp/
+
+## build
+Client/src/_site/
+HidSync/lastupdated
+Client/src/.rollup.cache
+Client/src/dist
+
+## local env files
+**/appsettings.Local*.json
+Activations/.env
+slack.env
+sendgrid.env
+.env
+
+## misc
+debug.log
+**/mono_crash.*.json
+**/*.pfx
+logs
+local
+
+## staging certs
+StagingCertificates/*.csr
+StagingCertificates/*.cer
+StagingCertificates/*.srl
+StagingCertificates/*.pem
+StagingCertificates/*.crt
+StagingCertificates/Password.txt
