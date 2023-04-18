@@ -58,6 +58,16 @@ internal class Program
 
         await FetchAndPrintAccessTokens(config, jwk.publicAndPrivateJwk, clientId, redirectUri, redirectPath);
 
+        /*
+         * Step 5 (later): Update the client secret
+         */
+
+        var newJwk = KeyGenerator.GenerateJwk();
+
+        var clientSecretUpdateResponse = await UpdateClientSecret(authHttpClient, config, clientId, jwk.publicAndPrivateJwk, newJwk.publicJwk);
+
+        await Out($"New client secret expiration: {clientSecretUpdateResponse.Expiration}");
+
         await Out("Done ...");
     }
 
@@ -96,6 +106,15 @@ internal class Program
         var clientStatusResponse = await authHttpClient.Get<ClientStatusResponse>(config.ClientStatusUri, accessToken: clientCredentialsTokens.AccessToken);
 
         return clientStatusResponse.Status;
+    }
+
+    private static async Task<ClientSecretUpdateResponse> UpdateClientSecret(AuthHttpClient authHttpClient, Config config, string clientId, string existingPublicAndPrivateJwk, string newPublicJwk)
+    {
+        var clientCredentialsTokens = await GetClientCredentialsTokens(config.Authority, clientId, existingPublicAndPrivateJwk, string.Join(" ", config.ApiScopes.Where(s => s.StartsWith(SelvbetjeningResource))));
+
+        var clientSecretUpdateResponse = await authHttpClient.Post<string, ClientSecretUpdateResponse>(config.ClientSecretUri, newPublicJwk, accessToken: clientCredentialsTokens.AccessToken);
+
+        return clientSecretUpdateResponse;
     }
 
     private static async Task<Tokens> GetClientCredentialsTokens(string authority, string clientId, string publicAndPrivateJwk, string scope)
