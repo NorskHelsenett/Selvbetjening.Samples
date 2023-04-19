@@ -19,8 +19,8 @@ internal class Program
         var jwk = KeyGenerator.GenerateJwk();
 
         using var authHttpClient = new AuthHttpClient();
-        string redirectUri = $"http://localhost:{config.RedirectPort}";
-        string redirectPath = $"/{config.RedirectPath}";
+        string redirectUri = $"http://localhost:{config.LocalHttpServer.RedirectPort}";
+        string redirectPath = $"/{config.LocalHttpServer.RedirectPath}";
 
         /*
          * Step 1: Create and submit the client draft
@@ -73,19 +73,19 @@ internal class Program
 
     private static async Task<ClientDraftResponse> SubmitClientDraft(Config config, string publicJwk, AuthHttpClient authHttpClient)
     {
-        var clientDraft = new ClientDraft(config.OrganizationNumber, publicJwk, config.ApiScopes);
+        var clientDraft = new ClientDraft(config.ClientDraft.OrganizationNumber, publicJwk, config.ClientDraft.ApiScopes);
 
         return await authHttpClient.Post<ClientDraft, ClientDraftResponse>(
-            config.ClientDraftUri, clientDraft,
-            headers: new Dictionary<string, string> { [config.ClientDraftApiKeyHeader] = config.ClientDraftApiKey });
+            config.Selvbetjening.ClientDraftUri, clientDraft,
+            headers: new Dictionary<string, string> { [config.Selvbetjening.ClientDraftApiKeyHeader] = config.Selvbetjening.ClientDraftApiKey });
     }
 
     private static async Task<string> ConfirmClientDraft(Config config, string clientId, string redirectUri, string redirectPath)
     {
-        string confirmationUri = config.ConfirmationUri.Replace("<client_id>", clientId).Replace("<port>", config.RedirectPort.ToString()).Replace("<path>", redirectPath);
+        string confirmationUri = config.Selvbetjening.ConfirmationUri.Replace("<client_id>", clientId).Replace("<port>", config.LocalHttpServer.RedirectPort.ToString()).Replace("<path>", redirectPath);
         string confirmationStatus = "";
 
-        using (var browserRunner = new BrowserRunner(redirectUri, $"/{config.RedirectPath}", config.HtmlTitle, config.HtmlBody))
+        using (var browserRunner = new BrowserRunner(redirectUri, $"/{config.LocalHttpServer.RedirectPath}", config.LocalHttpServer.HtmlTitle, config.LocalHttpServer.HtmlBody))
         {
             string confirmationResult = await browserRunner.RunUntilCallback(confirmationUri);
 
@@ -101,18 +101,18 @@ internal class Program
 
     private static async Task<OverallClientStatus> GetClientStatus(AuthHttpClient authHttpClient, Config config, string clientId, string publicAndPrivateJwk)
     {
-        var clientCredentialsTokens = await GetClientCredentialsTokens(config.Authority, clientId, publicAndPrivateJwk, string.Join(" ", config.ApiScopes.Where(s => s.StartsWith(SelvbetjeningResource))));
+        var clientCredentialsTokens = await GetClientCredentialsTokens(config.HelseId.Authority, clientId, publicAndPrivateJwk, string.Join(" ", config.ClientDraft.ApiScopes.Where(s => s.StartsWith(SelvbetjeningResource))));
 
-        var clientStatusResponse = await authHttpClient.Get<ClientStatusResponse>(config.ClientStatusUri, accessToken: clientCredentialsTokens.AccessToken);
+        var clientStatusResponse = await authHttpClient.Get<ClientStatusResponse>(config.Selvbetjening.ClientStatusUri, accessToken: clientCredentialsTokens.AccessToken);
 
         return clientStatusResponse.Status;
     }
 
     private static async Task<ClientSecretUpdateResponse> UpdateClientSecret(AuthHttpClient authHttpClient, Config config, string clientId, string existingPublicAndPrivateJwk, string newPublicJwk)
     {
-        var clientCredentialsTokens = await GetClientCredentialsTokens(config.Authority, clientId, existingPublicAndPrivateJwk, string.Join(" ", config.ApiScopes.Where(s => s.StartsWith(SelvbetjeningResource))));
+        var clientCredentialsTokens = await GetClientCredentialsTokens(config.HelseId.Authority, clientId, existingPublicAndPrivateJwk, string.Join(" ", config.ClientDraft.ApiScopes.Where(s => s.StartsWith(SelvbetjeningResource))));
 
-        var clientSecretUpdateResponse = await authHttpClient.Post<string, ClientSecretUpdateResponse>(config.ClientSecretUri, newPublicJwk, accessToken: clientCredentialsTokens.AccessToken);
+        var clientSecretUpdateResponse = await authHttpClient.Post<string, ClientSecretUpdateResponse>(config.Selvbetjening.ClientSecretUri, newPublicJwk, accessToken: clientCredentialsTokens.AccessToken);
 
         return clientSecretUpdateResponse;
     }
@@ -129,11 +129,11 @@ internal class Program
         var clientData = new ClientData
         {
             ClientId = clientId,
-            Authority = config.Authority,
+            Authority = config.HelseId.Authority,
             Jwk = publicAndPrivateJwk,
             RedirectHost = redirectUri,
             RedirectPath = redirectPath,
-            Resources = GetResources(config.ApiScopes),
+            Resources = GetResources(config.ClientDraft.ApiScopes),
         };
 
         using var auth = new UserAuthenticator(clientData);
@@ -141,8 +141,8 @@ internal class Program
         var initialResourceTokens = await LoginAndGetTokens(
             auth,
             clientData.Resources.Where(r => r.Name == SelvbetjeningResource).Select(r => r.Name).ToArray(),
-            config.HtmlTitle,
-            config.HtmlBody);
+            config.LocalHttpServer.HtmlTitle,
+            config.LocalHttpServer.HtmlBody);
 
         if (initialResourceTokens == null)
         {
