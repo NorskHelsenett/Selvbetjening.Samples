@@ -8,15 +8,17 @@ using Microsoft.Extensions.Configuration;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-internal class Program
+namespace ClientRegistrationExample;
+
+internal static class Program
 {
     private const string SelvbetjeningResource = "nhn:selvbetjening";
 
-    private static async Task Main(string[] args)
+    private static async Task Main()
     {
         var config = GetConfig();
 
-        var jwk = KeyGenerator.GenerateJwk();
+        var (publicJwk, publicAndPrivateJwk) = KeyGenerator.GenerateJwk();
 
         using var authHttpClient = new AuthHttpClient();
         string redirectUri = $"http://localhost:{config.LocalHttpServer.RedirectPort}";
@@ -26,7 +28,7 @@ internal class Program
          * Step 1: Create and submit the client draft
          */
 
-        string clientId = (await SubmitClientDraft(config, jwk.publicJwk, authHttpClient)).ClientId;
+        string clientId = (await SubmitClientDraft(config, publicJwk, authHttpClient)).ClientId;
 
         /*
          * Step 2: Let the user log in and confirm the client draft
@@ -44,7 +46,7 @@ internal class Program
          * Step 3: Check the status of the client
          */
 
-        var clientStatus = await GetClientStatus(authHttpClient, config, clientId, jwk.publicAndPrivateJwk);
+        var clientStatus = await GetClientStatus(authHttpClient, config, clientId, publicAndPrivateJwk);
 
         if (clientStatus != OverallClientStatus.Active)
         {
@@ -56,7 +58,7 @@ internal class Program
          * Step 4: Get an access token for each resource (audience)
          */
 
-        await FetchAndPrintAccessTokens(config, jwk.publicAndPrivateJwk, clientId, redirectUri, redirectPath);
+        await LogInAndPrintAccessTokens(config, publicAndPrivateJwk, clientId, redirectUri, redirectPath);
 
         /*
          * Step 5 (later): Update the client secret
@@ -64,7 +66,7 @@ internal class Program
 
         var newJwk = KeyGenerator.GenerateJwk();
 
-        var clientSecretUpdateResponse = await UpdateClientSecret(authHttpClient, config, clientId, jwk.publicAndPrivateJwk, newJwk.publicJwk);
+        var clientSecretUpdateResponse = await UpdateClientSecret(authHttpClient, config, clientId, publicAndPrivateJwk, newJwk.publicJwk);
 
         await Out($"New client secret expiration: {clientSecretUpdateResponse.Expiration}");
 
@@ -112,9 +114,7 @@ internal class Program
     {
         var clientCredentialsTokens = await GetClientCredentialsTokens(config.HelseId.Authority, clientId, existingPublicAndPrivateJwk, string.Join(" ", config.ClientDraft.ApiScopes.Where(s => s.StartsWith(SelvbetjeningResource))));
 
-        var clientSecretUpdateResponse = await authHttpClient.Post<string, ClientSecretUpdateResponse>(config.Selvbetjening.ClientSecretUri, newPublicJwk, accessToken: clientCredentialsTokens.AccessToken);
-
-        return clientSecretUpdateResponse;
+        return await authHttpClient.Post<string, ClientSecretUpdateResponse>(config.Selvbetjening.ClientSecretUri, newPublicJwk, accessToken: clientCredentialsTokens.AccessToken);
     }
 
     private static async Task<Tokens> GetClientCredentialsTokens(string authority, string clientId, string publicAndPrivateJwk, string scope)
@@ -124,7 +124,7 @@ internal class Program
         return await auth.GetTokens(clientId, publicAndPrivateJwk, scope);
     }
 
-    private static async Task FetchAndPrintAccessTokens(Config config, string publicAndPrivateJwk, string clientId, string redirectUri, string redirectPath)
+    private static async Task LogInAndPrintAccessTokens(Config config, string publicAndPrivateJwk, string clientId, string redirectUri, string redirectPath)
     {
         var clientData = new ClientData
         {
@@ -140,7 +140,7 @@ internal class Program
 
         var initialResourceTokens = await LoginAndGetTokens(
             auth,
-            clientData.Resources.Where(r => r.Name == SelvbetjeningResource).Select(r => r.Name).ToArray(),
+            new[] { SelvbetjeningResource },
             config.LocalHttpServer.HtmlTitle,
             config.LocalHttpServer.HtmlBody);
 
@@ -246,7 +246,7 @@ internal class Program
 
     private static Dictionary<string, string> QuerystringToDictionary(string confirmationResult)
     {
-        return confirmationResult.Substring(1).Split("&").Select(s => s.Split("=")).ToDictionary(s => s[0], s => s[1]);
+        return confirmationResult[1..].Split("&").Select(s => s.Split("=")).ToDictionary(s => s[0], s => s[1]);
     }
 
     private static async Task PrintAccessToken(string resource, string accessToken)
@@ -274,5 +274,5 @@ internal class Program
         _jsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
     }
 
-    private static JsonSerializerOptions _jsonSerializerOptions;
+    private static readonly JsonSerializerOptions _jsonSerializerOptions;
 }

@@ -5,10 +5,10 @@ using System.Text;
 
 namespace Auth.Utils;
 
-public class ContainedHttpServer : IDisposable
+public sealed class ContainedHttpServer : IDisposable
 {
-    private IWebHost _host;
-    private TaskCompletionSource<string> _source = new TaskCompletionSource<string>();
+    private readonly IWebHost _host;
+    private TaskCompletionSource<string> _source = new();
     private readonly string _htmlTitle;
     private readonly string _htmlBody;
     private readonly int _timeoutInSeconds;
@@ -47,7 +47,7 @@ public class ContainedHttpServer : IDisposable
     {
         app.Run(async ctx =>
         {
-            if (_routes != null && _routes.ContainsKey(ctx.Request.Path.Value!))
+            if (_routes?.ContainsKey(ctx.Request.Path.Value!) == true)
             {
                 _routes[ctx.Request.Path.Value!](ctx);
             }
@@ -65,11 +65,9 @@ public class ContainedHttpServer : IDisposable
                     }
                     else
                     {
-                        using (var sr = new StreamReader(ctx.Request.Body, Encoding.UTF8))
-                        {
-                            var body = await sr.ReadToEndAsync();
-                            SetResult(body, ctx);
-                        }
+                        using var sr = new StreamReader(ctx.Request.Body, Encoding.UTF8);
+                        var body = await sr.ReadToEndAsync();
+                        SetResult(body, ctx);
                     }
                 }
                 else
@@ -121,7 +119,7 @@ public class ContainedHttpServer : IDisposable
 
     public Task<string> WaitForCallbackAsync(int? timeoutInSeconds = null)
     {
-        timeoutInSeconds = timeoutInSeconds ?? _timeoutInSeconds;
+        timeoutInSeconds ??= _timeoutInSeconds;
 
         Task.Run(async () =>
         {

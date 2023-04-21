@@ -40,7 +40,7 @@ public static class KeyGenerator
             DQ = jwk.DQ,
             E = jwk.E,
             K = jwk.K,
-            KeyOps = jwk.KeyOps != null && jwk.KeyOps.Count > 0 ? jwk.KeyOps : null,
+            KeyOps = jwk.KeyOps?.Count > 0 ? jwk.KeyOps : null,
             Kid = jwk.Kid,
             Kty = jwk.Kty,
             N = jwk.N,
@@ -51,7 +51,7 @@ public static class KeyGenerator
             Use = jwk.Use,
             X = jwk.X,
             Y = jwk.Y,
-            X5c = jwk.X5c != null && jwk.X5c.Count > 0 ? jwk.X5c : null,
+            X5c = jwk.X5c?.Count > 0 ? jwk.X5c : null,
             X5t = jwk.X5t,
             X5u = jwk.X5u,
             X5tS256 = jwk.X5tS256
@@ -62,17 +62,12 @@ public static class KeyGenerator
 
     private static int ToInt(KeySize keySize)
     {
-        switch (keySize)
+        return keySize switch
         {
-            case KeySize.Bits2048:
-                return 2048;
-
-            case KeySize.Bits4096:
-                return 4096;
-
-            default:
-                throw new Exception($"Unhandled key size: {keySize}");
-        }
+            KeySize.Bits2048 => 2048,
+            KeySize.Bits4096 => 4096,
+            _ => throw new Exception($"Unhandled key size: {keySize}"),
+        };
     }
 }
 
