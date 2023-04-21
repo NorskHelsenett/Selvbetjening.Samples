@@ -179,7 +179,6 @@ internal static class Program
         {
             string[] parts = scope.Split('/', StringSplitOptions.RemoveEmptyEntries);
             string resourceName = parts[0];
-            string scopeName = parts[1];
 
             if (!dict.TryGetValue(resourceName, out var scopeList))
             {
@@ -187,7 +186,7 @@ internal static class Program
                 dict.Add(resourceName, scopeList);
             }
 
-            scopeList.Add(scopeName);
+            scopeList.Add(scope);
         }
 
         return dict.Select(kvp => new Resource(kvp.Key, kvp.Value.ToArray())).ToArray();
