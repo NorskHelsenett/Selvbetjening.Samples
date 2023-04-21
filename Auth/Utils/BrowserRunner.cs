@@ -4,7 +4,7 @@ using System.Runtime.InteropServices;
 
 namespace Auth.Utils;
 
-public class BrowserRunner : IDisposable
+public sealed class BrowserRunner : IDisposable
 {
     private const string StartPage = "/start";
     private readonly bool _hasStartPage;

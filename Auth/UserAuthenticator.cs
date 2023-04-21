@@ -5,7 +5,7 @@ using IdentityModel.OidcClient;
 
 namespace Auth;
 
-public class UserAuthenticator : IDisposable
+public sealed class UserAuthenticator : IDisposable
 {
     private readonly ClientData _clientData;
     private readonly HttpClient _httpClient;

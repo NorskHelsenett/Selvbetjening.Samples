@@ -10,6 +10,4 @@ public class Resource
 
     public string Name { get; set; }
     public string[] Scopes { get; set; }
-
-    public string[] FullScopes => Scopes.Select(s => $"{Name}/{s}").ToArray();
 }
