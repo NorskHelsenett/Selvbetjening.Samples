@@ -43,7 +43,7 @@ public sealed class UserAuthenticator : IDisposable
         // Use the Scope-parameter to indicate which scopes you want for these API-s
         var clientAssertionPayload = ClientAssertionBuilder.GetClientAssertion(_clientData.ClientId, _clientData.Jwk, _tokenEndpoint, _clientData.OrganizationNumber);
 
-        string scopes = string.Join(" ", _clientData.Resources.Select(r => string.Join(" ", r.FullScopes)));
+        string scopes = string.Join(" ", _clientData.Resources.Select(r => string.Join(" ", r.Scopes)));
         string[] configuredResources = _clientData.Resources.Select(r => r.Name).ToArray();
         string[] resourcesToGetTokensFor = resources?.Length > 0 ? resources : configuredResources;
 
