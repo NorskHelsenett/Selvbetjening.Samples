@@ -4,8 +4,8 @@ This tutorial is for creating HelseID clients through [Selvbetjening for HelseID
 
 After creating a client system with an api key, which is described in the following section, the flow is like this:
 
-1. Create a client draft for the end user to confirm in [Selvbetjening for HelseID](https://selvbetjening.test.nhn.no)
-2. Open a web browser and direct the end user to the confirmation page
+1. Create a client draft using the api
+2. Open a web browser and direct the end user to the confirmation page in [Selvbetjening for HelseID](https://selvbetjening.test.nhn.no)
 3. The end user confirms and is redirected to your local http server
 4. You can check the status of the client's access to the specified scopes
 5. When all is good, you can request access tokens for the specified apis
