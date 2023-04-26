@@ -23,9 +23,11 @@ internal class SelvbetjeningConfig
     public required string ClientDraftApiKeyHeader { get; set; }
     public required string ClientDraftApiKey { get; set; }
 
-    public string ClientDraftUri => $"{ApiUri}/{ClientDraftEndpoint}";
-    public string ClientStatusUri => $"{ApiUri}/{ClientStatusEndpoint}";
-    public string ClientSecretUri => $"{ApiUri}/{ClientSecretEndpoint}";
+    public string ClientDraftUri => GetEndpointUri(ClientDraftEndpoint);
+    public string ClientStatusUri => GetEndpointUri(ClientStatusEndpoint);
+    public string ClientSecretUri => GetEndpointUri(ClientSecretEndpoint);
+
+    private string GetEndpointUri(string endpointPath) => new Uri(new Uri(ApiUri), endpointPath).ToString();
 }
 
 internal class ClientDraftConfig
