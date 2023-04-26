@@ -8,9 +8,9 @@ namespace Auth.Utils;
 
 public static class ClientAssertionBuilder
 {
-    public static ClientAssertion GetClientAssertion(string clientId, string jwk, string tokenEndpoint, string? orgNo = null)
+    public static ClientAssertion GetClientAssertion(string clientId, string jwk, string authority, string? orgNo = null)
     {
-        var clientAssertionString = BuildClientAssertion(clientId, jwk, tokenEndpoint, orgNo);
+        var clientAssertionString = BuildClientAssertion(clientId, jwk, authority, orgNo);
 
         return new ClientAssertion
         {
@@ -19,7 +19,7 @@ public static class ClientAssertionBuilder
         };
     }
 
-    private static string BuildClientAssertion(string clientId, string jwk, string tokenEndpoint, string? orgNo)
+    private static string BuildClientAssertion(string clientId, string jwk, string authority, string? orgNo)
     {
         var claims = new List<Claim>
         {
@@ -51,7 +51,7 @@ public static class ClientAssertionBuilder
         var credentials =
             new JwtSecurityToken(
                 clientId,
-                tokenEndpoint,
+                authority,
                 claims,
                 DateTime.UtcNow,
                 DateTime.UtcNow.AddSeconds(60),

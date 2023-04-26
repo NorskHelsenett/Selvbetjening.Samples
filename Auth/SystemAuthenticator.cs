@@ -24,7 +24,7 @@ public class SystemAuthenticator : IDisposable
         var request = new ClientCredentialsTokenRequest
         {
             Address = disco.TokenEndpoint,
-            ClientAssertion = ClientAssertionBuilder.GetClientAssertion(clientId, publicAndPrivateJwk, disco.TokenEndpoint),
+            ClientAssertion = ClientAssertionBuilder.GetClientAssertion(clientId, publicAndPrivateJwk, _authority),
             ClientId = clientId,
             Scope = scope,
             GrantType = OidcConstants.GrantTypes.ClientCredentials,
