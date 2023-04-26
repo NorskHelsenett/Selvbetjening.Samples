@@ -41,7 +41,7 @@ public sealed class UserAuthenticator : IDisposable
         // Perfom user login, uses the /authorize endpoint in HelseID
         // Use the Resource-parameter to indicate which APIs you want tokens for
         // Use the Scope-parameter to indicate which scopes you want for these API-s
-        var clientAssertionPayload = ClientAssertionBuilder.GetClientAssertion(_clientData.ClientId, _clientData.Jwk, _tokenEndpoint, _clientData.OrganizationNumber);
+        var clientAssertionPayload = ClientAssertionBuilder.GetClientAssertion(_clientData.ClientId, _clientData.Jwk, _clientData.Authority, _clientData.OrganizationNumber);
 
         string scopes = string.Join(" ", _clientData.Resources.Select(r => string.Join(" ", r.Scopes)));
         string[] configuredResources = _clientData.Resources.Select(r => r.Name).ToArray();
@@ -116,7 +116,7 @@ public sealed class UserAuthenticator : IDisposable
             ClientId = _clientData.ClientId,
             RefreshToken = refreshToken,
             Resource = new List<string> { resource },
-            ClientAssertion = ClientAssertionBuilder.GetClientAssertion(_clientData.ClientId, _clientData.Jwk, _tokenEndpoint, _clientData.OrganizationNumber)
+            ClientAssertion = ClientAssertionBuilder.GetClientAssertion(_clientData.ClientId, _clientData.Jwk, _clientData.Authority, _clientData.OrganizationNumber)
         };
 
         var refreshTokenResult = await _httpClient.RequestRefreshTokenAsync(refreshTokenRequest);
