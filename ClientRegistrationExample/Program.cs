@@ -75,7 +75,10 @@ internal static class Program
 
     private static async Task<ClientDraftResponse> SubmitClientDraft(Config config, string publicJwk, AuthHttpClient authHttpClient)
     {
-        var clientDraft = new ClientDraft(config.ClientDraft.OrganizationNumber, publicJwk, config.ClientDraft.ApiScopes);
+        var clientDraft = new ClientDraft(config.ClientDraft.OrganizationNumber, publicJwk, config.ClientDraft.ApiScopes)
+        {
+            AudienceSpecificClientClaims = config.ClientDraft.AudienceSpecificClientClaims,
+        };
 
         return await authHttpClient.Post<ClientDraft, ClientDraftResponse>(
             config.Selvbetjening.ClientDraftUri, clientDraft,

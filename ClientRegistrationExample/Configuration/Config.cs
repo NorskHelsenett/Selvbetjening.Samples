@@ -1,4 +1,6 @@
-﻿namespace ClientRegistrationExample.Configuration;
+﻿using Common.Models;
+
+namespace ClientRegistrationExample.Configuration;
 
 internal class Config
 {
@@ -34,7 +36,7 @@ internal class ClientDraftConfig
 {
     public required string OrganizationNumber { get; set; }
     public required string[] ApiScopes { get; set; }
-    public KeyValuePair<string, string>[]? AudienceSpecificClientClaims { get; set; }
+    public AudienceSpecificClientClaim[]? AudienceSpecificClientClaims { get; set; }
     public string[]? RedirectUris { get; set; }
     public string[]? PostLogoutRedirectUris { get; set; }
     public string[]? ChildOrganizationNumbers { get; set; }
