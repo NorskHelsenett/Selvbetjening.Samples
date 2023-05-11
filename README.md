@@ -16,7 +16,7 @@ After creating a client system with an api key, which is described in the follow
 
 A client system must be created in **[Selvbetjening for HelseID ](https://selvbetjening.test.nhn.no/)**
 
-You probably want to enable support for refresh tokens, and it's important to specify which apis (services) are supported by the system.
+You probably want to enable support for refresh tokens, and it's important to specify which apis (services) are supported by the system. The redirect URI should be set to `http://localhost:1337/callback` when using the default config.
 
 After the client system has been created, go to the 'Automatisering' tab, and generate an api key:
 
