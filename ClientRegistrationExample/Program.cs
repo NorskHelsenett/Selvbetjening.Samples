@@ -42,6 +42,10 @@ internal static class Program
             return;
         }
 
+        // Wait because the client might not yet be ready in HelseID
+        // TODO: Retry logic
+        await Task.Delay(10000);
+
         /*
          * Step 3: Check the status of the client
          */
