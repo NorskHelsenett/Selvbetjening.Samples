@@ -52,7 +52,7 @@ public sealed class UserAuthenticator : IDisposable
             Authority = _clientData.Authority,
             LoadProfile = false,
             RedirectUri = $"{_clientData.RedirectHost}{_clientData.RedirectPath}",
-            Scope = $"openid profile offline_access {scopes}",
+            Scope = $"openid offline_access {scopes}",
             ClientId = _clientData.ClientId,
             Resource = configuredResources,
             ClientAssertion = clientAssertionPayload,
