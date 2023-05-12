@@ -42,7 +42,8 @@ internal static class Program
             return;
         }
 
-        // Wait because the client might not yet be ready in HelseID
+        // Wait for the client configuration to be loaded into HelseID's runtime cache
+        // This can take some time, and will be improved in the future
         // TODO: Retry logic
         await Task.Delay(10000);
 
