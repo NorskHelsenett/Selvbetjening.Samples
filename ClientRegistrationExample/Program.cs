@@ -42,10 +42,9 @@ internal static class Program
             return;
         }
 
-        // Wait for the client configuration to be loaded into HelseID's runtime cache
-        // This can take some time, and will be improved in the future
-        // TODO: Retry logic
-        await Task.Delay(10000);
+        // Wait for the client configuration to be loaded into HelseID's runtime cache (worst case 20 seconds for the test environment)
+        // HelseID will improve this in the future
+        await Task.Delay(20000);
 
         /*
          * Step 3: Check the status of the client
