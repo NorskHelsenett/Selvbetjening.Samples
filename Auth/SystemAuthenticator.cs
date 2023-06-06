@@ -17,7 +17,7 @@ public class SystemAuthenticator : IDisposable
         _httpClient = new HttpClient();
     }
 
-    public async Task<Tokens> GetTokens(string clientId, string publicAndPrivateJwk, string scope)
+    public async Task<Tokens> GetTokens(string clientId, string publicAndPrivateJwk, string[] scopes)
     {
         var disco = await GetDisco();
 
@@ -26,7 +26,7 @@ public class SystemAuthenticator : IDisposable
             Address = disco.TokenEndpoint,
             ClientAssertion = ClientAssertionBuilder.GetClientAssertion(clientId, publicAndPrivateJwk, _authority),
             ClientId = clientId,
-            Scope = scope,
+            Scope = string.Join(" ", scopes),
             GrantType = OidcConstants.GrantTypes.ClientCredentials,
             ClientCredentialStyle = ClientCredentialStyle.PostBody
         };

@@ -8,6 +8,7 @@ internal class Config
     public required SelvbetjeningConfig Selvbetjening { get; set; }
     public required ClientDraftConfig ClientDraft { get; set; }
     public required LocalHttpServerConfig LocalHttpServer { get; set; }
+    public required AppConfig App { get; set; }
 }
 
 internal class HelseIdConfig
@@ -48,4 +49,9 @@ internal class LocalHttpServerConfig
     public required int RedirectPort { get; set; }
     public required string HtmlTitle { get; set; }
     public required string HtmlBody { get; set; }
+}
+
+internal class AppConfig
+{
+    public required bool UserLogin { get; set; }
 }
