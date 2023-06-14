@@ -28,6 +28,20 @@ public class AuthHttpClient : IDisposable
         return Deserialize<ResponseType>(jsonResponse);
     }
 
+    public async Task<ResponseType> Put<RequestType, ResponseType>(string uri, RequestType body, string? accessToken = null, IDictionary<string, string>? headers = null)
+    {
+        string jsonBody = JsonSerializer.Serialize(body, _jsonSerializerOptions);
+        string jsonResponse = await Put(uri, jsonBody, accessToken, headers);
+
+        return Deserialize<ResponseType>(jsonResponse);
+    }
+
+    public async Task Put<RequestType>(string uri, RequestType body, string? accessToken = null, IDictionary<string, string>? headers = null)
+    {
+        string jsonBody = JsonSerializer.Serialize(body, _jsonSerializerOptions);
+        var _ = await Put(uri, jsonBody, accessToken, headers);
+    }
+
     public async Task<string> Get(string uri, string? accessToken = null, IDictionary<string, string>? headers = null)
     {
         using var requestMessage = CreateRequestMessage(uri, accessToken, headers, HttpMethod.Get);
@@ -39,7 +53,17 @@ public class AuthHttpClient : IDisposable
 
     public async Task<string> Post(string uri, string body, string? accessToken = null, IDictionary<string, string>? headers = null)
     {
-        using var requestMessage = CreateRequestMessage(uri, accessToken, headers, HttpMethod.Post);
+        return await SendWithContent(uri, body, accessToken, headers, HttpMethod.Post);
+    }
+
+    public async Task<string> Put(string uri, string body, string? accessToken = null, IDictionary<string, string>? headers = null)
+    {
+        return await SendWithContent(uri, body, accessToken, headers, HttpMethod.Put);
+    }
+
+    private async Task<string> SendWithContent(string uri, string body, string? accessToken, IDictionary<string, string>? headers, HttpMethod method)
+    {
+        var requestMessage = CreateRequestMessage(uri, accessToken, headers, method);
 
         requestMessage.Content = new StringContent(body, MediaTypeHeaderValue.Parse("application/json"));
 
