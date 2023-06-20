@@ -91,6 +91,7 @@ internal static class Program
         var clientDraft = new ClientDraft(config.ClientDraft.OrganizationNumber, publicJwk, config.ClientDraft.ApiScopes)
         {
             AudienceSpecificClientClaims = config.ClientDraft.AudienceSpecificClientClaims,
+            ChildOrganizationNumbers = config.ClientDraft.ChildOrganizationNumbers,
         };
 
         return await authHttpClient.Post<ClientDraft, ClientDraftResponse>(
