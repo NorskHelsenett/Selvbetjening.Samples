@@ -92,6 +92,7 @@ internal static class Program
         {
             AudienceSpecificClientClaims = config.ClientDraft.AudienceSpecificClientClaims,
             ChildOrganizationNumbers = config.ClientDraft.ChildOrganizationNumbers,
+            RedirectUris = config.ClientDraft.RedirectUris,
         };
 
         return await authHttpClient.Post<ClientDraft, ClientDraftResponse>(
