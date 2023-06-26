@@ -20,7 +20,7 @@ internal static class Program
 
         var update = new ClientUpdate
         {
-            ApiScopes = new[] { SelvbetjeningClientScope, "nhn:kjernejournal/api" },
+            ApiScopes = new[] { SelvbetjeningClientScope, "a_new_scope" },
             AudienceSpecificClientClaims = null,
             ChildOrganizationNumbers = null,
             PostLogoutRedirectUris = null,
@@ -37,20 +37,20 @@ internal static class Program
             await Out($"Update failed: {ex.Message}");
         }
 
-        //await UpdateClientSecret(config, authHttpClient);
+        // *** Uncomment to update the client secret ***
+        // var newJwk = KeyGenerator.GenerateJwk();
+        // await UpdateClientSecret(config, authHttpClient, newJwk);
     }
 
     private static async Task UpdateClient(AuthHttpClient authHttpClient, Config config, ClientUpdate update)
     {
         string accessToken = await GetAccessToken(config);
 
-        await authHttpClient.Put<ClientUpdate>(config.Selvbetjening.ClientUri, update, accessToken: accessToken);
+        await authHttpClient.Put(config.Selvbetjening.ClientUri, update, accessToken: accessToken);
     }
 
-    private static async Task UpdateClientSecret(Config config, AuthHttpClient authHttpClient)
+    private static async Task UpdateClientSecret(Config config, AuthHttpClient authHttpClient, (string publicJwk, string publicAndPrivateJwk) newJwk)
     {
-        var newJwk = KeyGenerator.GenerateJwk();
-
         var clientSecretUpdateResponse = await UpdateClientSecret(authHttpClient, config, newJwk.publicJwk);
 
         await Out($"New client secret expiration: {clientSecretUpdateResponse.Expiration}");
