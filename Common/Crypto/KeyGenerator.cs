@@ -1,4 +1,5 @@
 ﻿using Common.Extensions;
+using Common.Models;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Cryptography;
 
@@ -12,7 +13,7 @@ public static class KeyGenerator
         return new KeyPair(rsa.ExportRSAPrivateKeyPem(), rsa.ExportRSAPublicKeyPem());
     }
 
-    public static (string publicJwk, string publicAndPrivateJwk) GenerateJwk(KeySize keySize = KeySize.Bits2048)
+    public static JwkWithMetadata GenerateRsaJwk(KeySize keySize = KeySize.Bits2048)
     {
         using var rsa = RSA.Create(ToInt(keySize));
         var rsaWithPrivateKey = new RsaSecurityKey(rsa.ExportParameters(true));
@@ -22,11 +23,14 @@ public static class KeyGenerator
 
         jwkWithPrivateKey.Kid = Base64UrlEncoder.Encode(jwkWithPrivateKey.ComputeJwkThumbprint());
         jwkWithoutPrivateKey.Kid = Base64UrlEncoder.Encode(jwkWithoutPrivateKey.ComputeJwkThumbprint());
+        const string alg = SecurityAlgorithms.RsaSha512;
+        jwkWithPrivateKey.Alg = alg;
+        jwkWithoutPrivateKey.Alg = alg;
 
         string serializedJwkWithPrivateKey = Serialize(jwkWithPrivateKey, false);
         string serializedJwkWithoutPrivateKey = Serialize(jwkWithoutPrivateKey, false);
 
-        return (serializedJwkWithoutPrivateKey, serializedJwkWithPrivateKey);
+        return new (serializedJwkWithPrivateKey, serializedJwkWithoutPrivateKey, alg);
     }
 
     private static string Serialize(JsonWebKey jwk, bool indented = false)

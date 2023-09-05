@@ -18,9 +18,9 @@ internal static class Program
     {
         var config = GetConfig();
 
-        var (publicJwk, publicAndPrivateJwk) = KeyGenerator.GenerateJwk();
-
-        using var authHttpClient = new AuthHttpClient();
+        var jwk = KeyGenerator.GenerateRsaJwk();
+        
+        using var authHttpClient = new AuthHttpClient(config.HelseId.UseDPoP ? jwk : null);
         string redirectUri = $"http://localhost:{config.LocalHttpServer.RedirectPort}";
         string redirectPath = $"/{config.LocalHttpServer.RedirectPath}";
 
@@ -28,7 +28,7 @@ internal static class Program
          * Step 1: Create and submit the client draft
          */
 
-        string clientId = (await SubmitClientDraft(config, publicJwk, authHttpClient)).ClientId;
+        string clientId = (await SubmitClientDraft(config, jwk.PublicValue, authHttpClient)).ClientId;
 
         /*
          * Step 2: Let the user log in and confirm the client draft
@@ -50,7 +50,16 @@ internal static class Program
          * Step 3: Check the status of the client
          */
 
-        var clientStatus = await GetClientStatus(authHttpClient, config, clientId, publicAndPrivateJwk);
+        var clientDataForSelvbetjeningScopes = new SystemClientData
+        {
+            Authority = config.HelseId.Authority,
+            ClientId = clientId,
+            Jwk = jwk,
+            Scopes = config.ClientDraft.ApiScopes.Where(s => s.StartsWith(SelvbetjeningResource)).ToArray(),
+            UseDPoP = config.HelseId.UseDPoP,
+        };
+
+        var clientStatus = await GetClientStatus(authHttpClient, clientDataForSelvbetjeningScopes, config.Selvbetjening.ClientStatusUri);
 
         if (clientStatus != OverallClientStatus.Active)
         {
@@ -65,21 +74,30 @@ internal static class Program
         if (config.App.UserLogin)
         {
             // Authorization code with PKCE
-            await LoginUserAndPrintAccessTokens(config, publicAndPrivateJwk, clientId, redirectUri, redirectPath);
+            await LoginUserAndPrintAccessTokens(config, jwk, clientId, redirectUri, redirectPath);
         }
         else
         {
             // Client credentials
-            await LoginSystemAndPrintAccessTokens(config, publicAndPrivateJwk, clientId);
+            var clientDataForAllScopes = new SystemClientData
+            {
+                Authority = config.HelseId.Authority,
+                ClientId = clientId,
+                Jwk = jwk,
+                Scopes = config.ClientDraft.ApiScopes,
+                UseDPoP = config.HelseId.UseDPoP,
+            };
+
+            await LoginSystemAndPrintAccessTokens(clientDataForAllScopes);
         }
 
         /*
          * Step 5 (later): Update the client secret
          */
 
-        var newJwk = KeyGenerator.GenerateJwk();
+        var newJwk = KeyGenerator.GenerateRsaJwk();
 
-        var clientSecretUpdateResponse = await UpdateClientSecret(authHttpClient, config, clientId, publicAndPrivateJwk, newJwk.publicJwk);
+        var clientSecretUpdateResponse = await UpdateClientSecret(authHttpClient, clientDataForSelvbetjeningScopes, newJwk.PublicValue, config.Selvbetjening.ClientSecretUri);
 
         await Out($"New client secret expiration: {clientSecretUpdateResponse.Expiration}");
 
@@ -119,39 +137,40 @@ internal static class Program
         return confirmationStatus;
     }
 
-    private static async Task<OverallClientStatus> GetClientStatus(AuthHttpClient authHttpClient, Config config, string clientId, string publicAndPrivateJwk)
+    private static async Task<OverallClientStatus> GetClientStatus(AuthHttpClient authHttpClient, SystemClientData clientData, string clientStatusUri)
     {
-        var clientCredentialsTokens = await GetClientCredentialsTokens(config.HelseId.Authority, clientId, publicAndPrivateJwk, config.ClientDraft.ApiScopes.Where(s => s.StartsWith(SelvbetjeningResource)).ToArray());
+        var clientCredentialsTokens = await GetClientCredentialsTokens(clientData);
 
-        var clientStatusResponse = await authHttpClient.Get<ClientStatusResponse>(config.Selvbetjening.ClientStatusUri, accessToken: clientCredentialsTokens.AccessToken);
+        var clientStatusResponse = await authHttpClient.Get<ClientStatusResponse>(clientStatusUri, accessToken: clientCredentialsTokens.AccessToken);
 
         return clientStatusResponse.Status;
     }
 
-    private static async Task<ClientSecretUpdateResponse> UpdateClientSecret(AuthHttpClient authHttpClient, Config config, string clientId, string existingPublicAndPrivateJwk, string newPublicJwk)
+    private static async Task<ClientSecretUpdateResponse> UpdateClientSecret(AuthHttpClient authHttpClient, SystemClientData clientData, string newPublicJwk, string clientSecretUri)
     {
-        var clientCredentialsTokens = await GetClientCredentialsTokens(config.HelseId.Authority, clientId, existingPublicAndPrivateJwk, config.ClientDraft.ApiScopes.Where(s => s.StartsWith(SelvbetjeningResource)).ToArray());
+        var clientCredentialsTokens = await GetClientCredentialsTokens(clientData);
 
-        return await authHttpClient.Post<string, ClientSecretUpdateResponse>(config.Selvbetjening.ClientSecretUri, newPublicJwk, accessToken: clientCredentialsTokens.AccessToken);
+        return await authHttpClient.Post<string, ClientSecretUpdateResponse>(clientSecretUri, newPublicJwk, accessToken: clientCredentialsTokens.AccessToken);
     }
 
-    private static async Task<Tokens> GetClientCredentialsTokens(string authority, string clientId, string publicAndPrivateJwk, string[] scopes)
+    private static async Task<Tokens> GetClientCredentialsTokens(SystemClientData clientData)
     {
-        using var auth = new SystemAuthenticator(authority);
+        using var auth = new SystemAuthenticator(clientData);
 
-        return await auth.GetTokens(clientId, publicAndPrivateJwk, scopes);
+        return await auth.GetTokens();
     }
 
-    private static async Task LoginUserAndPrintAccessTokens(Config config, string publicAndPrivateJwk, string clientId, string redirectUri, string redirectPath)
+    private static async Task LoginUserAndPrintAccessTokens(Config config, JwkWithMetadata jwk, string clientId, string redirectUri, string redirectPath)
     {
-        var clientData = new ClientData
+        var clientData = new UserClientData
         {
             ClientId = clientId,
             Authority = config.HelseId.Authority,
-            Jwk = publicAndPrivateJwk,
+            Jwk = jwk,
             RedirectHost = redirectUri,
             RedirectPath = redirectPath,
             Resources = GetResources(config.ClientDraft.ApiScopes),
+            UseDPoP = config.HelseId.UseDPoP,
         };
 
         using var auth = new UserAuthenticator(clientData);
@@ -189,13 +208,22 @@ internal static class Program
         }
     }
 
-    private static async Task LoginSystemAndPrintAccessTokens(Config config, string publicAndPrivateJwk, string clientId)
+    private static async Task LoginSystemAndPrintAccessTokens(SystemClientData clientData)
     {
-        var resources = GetResources(config.ClientDraft.ApiScopes);
+        var resources = GetResources(clientData.Scopes);
 
         foreach (var resource in resources)
         {
-            var tokens = await GetClientCredentialsTokens(config.HelseId.Authority, clientId, publicAndPrivateJwk, resource.Scopes);
+            var clientDataForResource = new SystemClientData
+            {
+                Authority = clientData.Authority,
+                ClientId = clientData.ClientId,
+                Jwk = clientData.Jwk,
+                Scopes = resource.Scopes,
+                UseDPoP = clientData.UseDPoP,
+            };
+
+            var tokens = await GetClientCredentialsTokens(clientDataForResource);
 
             await PrintAccessToken(resource.Name, tokens.AccessToken);
         }

@@ -14,6 +14,7 @@ internal class Config
 internal class HelseIdConfig
 {
     public required string Authority { get; set; }
+    public required bool UseDPoP { get; set; }
 }
 
 internal class SelvbetjeningConfig

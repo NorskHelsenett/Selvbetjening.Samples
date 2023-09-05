@@ -1,4 +1,6 @@
-﻿using System.Net.Http.Headers;
+﻿using Common.Models;
+using IdentityModel.Client;
+using System.Net.Http.Headers;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -7,10 +9,12 @@ namespace Auth.Utils;
 public class AuthHttpClient : IDisposable
 {
     private readonly HttpClient _httpClient;
+    private readonly JwkWithMetadata? _dPoPKey;
 
-    public AuthHttpClient()
+    public AuthHttpClient(JwkWithMetadata? dPoPKey = null)
     {
         _httpClient = new HttpClient();
+        _dPoPKey = dPoPKey;
     }
 
     public async Task<T> Get<T>(string uri, string? accessToken = null, IDictionary<string, string>? headers = null)
@@ -72,13 +76,18 @@ public class AuthHttpClient : IDisposable
         return await GetResponseMessage(response);
     }
 
-    private static HttpRequestMessage CreateRequestMessage(string uri, string? accessToken, IDictionary<string, string>? headers, HttpMethod method)
+    private HttpRequestMessage CreateRequestMessage(string uri, string? accessToken, IDictionary<string, string>? headers, HttpMethod method)
     {
         var requestMessage = new HttpRequestMessage(method, uri);
 
-        if (accessToken != null)
+        if (_dPoPKey != null && accessToken != null)
         {
-            requestMessage.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+            var dPopProof = DPoPProofBuilder.CreateDPoPProof(uri, method.ToString(), _dPoPKey, accessToken: accessToken);
+            requestMessage.SetDPoPToken(accessToken, dPopProof);
+        }
+        else if (accessToken != null)
+        {
+            requestMessage.SetBearerToken(accessToken);
         }
 
         requestMessage.Headers.Add("Accept", "application/json");
