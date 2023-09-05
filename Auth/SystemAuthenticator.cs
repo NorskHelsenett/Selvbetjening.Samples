@@ -7,38 +7,50 @@ namespace Auth;
 
 public class SystemAuthenticator : IDisposable
 {
-    private readonly string _authority;
+    private readonly SystemClientData _clientData;
     private readonly HttpClient _httpClient;
     private DiscoveryDocumentResponse? _cachedDiscoveryDocument;
 
-    public SystemAuthenticator(string authority)
+    public SystemAuthenticator(SystemClientData clientData)
     {
-        _authority = authority;
+        _clientData = clientData;
         _httpClient = new HttpClient();
     }
 
-    public async Task<Tokens> GetTokens(string clientId, string publicAndPrivateJwk, string[] scopes)
+    public async Task<Tokens> GetTokens()
     {
         var disco = await GetDisco();
 
-        var request = new ClientCredentialsTokenRequest
-        {
-            Address = disco.TokenEndpoint,
-            ClientAssertion = ClientAssertionBuilder.GetClientAssertion(clientId, publicAndPrivateJwk, _authority),
-            ClientId = clientId,
-            Scope = string.Join(" ", scopes),
-            GrantType = OidcConstants.GrantTypes.ClientCredentials,
-            ClientCredentialStyle = ClientCredentialStyle.PostBody
-        };
+        var request = CreateClientCredentialsTokenRequest(disco.TokenEndpoint!);
 
         var tokenResponse = await _httpClient.RequestClientCredentialsTokenAsync(request);
+
+        if (_clientData.UseDPoP && tokenResponse.IsError && tokenResponse.Error == "use_dpop_nonce" && !string.IsNullOrEmpty(tokenResponse.DPoPNonce))
+        {
+            request = CreateClientCredentialsTokenRequest(disco.TokenEndpoint!, dPoPNonce: tokenResponse.DPoPNonce);
+            tokenResponse = await _httpClient.RequestClientCredentialsTokenAsync(request);
+        }
 
         if (tokenResponse.IsError)
         {
             throw new Exception($"Failed getting client credentials tokens: {tokenResponse.Error}");
         }
 
-        return new Tokens(tokenResponse.AccessToken, tokenResponse.RefreshToken);
+        return new Tokens(tokenResponse.AccessToken!, tokenResponse.RefreshToken!);
+    }
+
+    private ClientCredentialsTokenRequest CreateClientCredentialsTokenRequest(string tokenEndpoint, string? dPoPNonce = null)
+    {
+        return new ClientCredentialsTokenRequest
+        {
+            Address = tokenEndpoint,
+            ClientAssertion = ClientAssertionBuilder.GetClientAssertion(_clientData.ClientId, _clientData.Jwk.PublicAndPrivateValue, _clientData.Authority),
+            ClientId = _clientData.ClientId,
+            Scope = string.Join(" ", _clientData.Scopes),
+            GrantType = OidcConstants.GrantTypes.ClientCredentials,
+            ClientCredentialStyle = ClientCredentialStyle.PostBody,
+            DPoPProofToken = _clientData.UseDPoP ? DPoPProofBuilder.CreateDPoPProof(tokenEndpoint, "POST", _clientData.Jwk, dPoPNonce: dPoPNonce) : null,
+        };
     }
 
     private async Task<DiscoveryDocumentResponse> GetDisco()
@@ -48,7 +60,7 @@ public class SystemAuthenticator : IDisposable
             return _cachedDiscoveryDocument;
         }
 
-        var disco = await _httpClient.GetDiscoveryDocumentAsync(_authority);
+        var disco = await _httpClient.GetDiscoveryDocumentAsync(_clientData.Authority);
 
         if (disco.IsError)
         {

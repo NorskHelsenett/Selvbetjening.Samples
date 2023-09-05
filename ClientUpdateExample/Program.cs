@@ -1,10 +1,10 @@
 ﻿using Auth;
 using Auth.Utils;
 using ClientUpdateExample.Configuration;
-using Common.Crypto;
 using Common.Models;
 using Common.Models.Response;
 using Microsoft.Extensions.Configuration;
+using Microsoft.IdentityModel.Tokens;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -16,7 +16,7 @@ internal static class Program
     {
         var config = GetConfig();
 
-        using var authHttpClient = new AuthHttpClient();
+        using var authHttpClient = new AuthHttpClient(config.HelseId.UseDPoP ? new JwkWithMetadata(config.Client.Jwk, "", SecurityAlgorithms.RsaSha512) : null);
 
         var update = new ClientUpdate
         {
@@ -65,16 +65,25 @@ internal static class Program
 
     private static async Task<string> GetAccessToken(Config config)
     {
-        var clientCredentialsTokens = await GetClientCredentialsTokens(config.HelseId.Authority, config.Client.ClientId, config.Client.Jwk, new[] { SelvbetjeningClientScope });
+        var clientData = new SystemClientData
+        {
+            Authority = config.HelseId.Authority,
+            ClientId = config.Client.ClientId,
+            Jwk = new JwkWithMetadata(config.Client.Jwk, "", SecurityAlgorithms.RsaSha512),
+            Scopes = new[] { SelvbetjeningClientScope },
+            UseDPoP = config.HelseId.UseDPoP,
+        };
+
+        var clientCredentialsTokens = await GetClientCredentialsTokens(clientData);
 
         return clientCredentialsTokens.AccessToken;
     }
 
-    private static async Task<Tokens> GetClientCredentialsTokens(string authority, string clientId, string publicAndPrivateJwk, string[] scopes)
+    private static async Task<Tokens> GetClientCredentialsTokens(SystemClientData clientData)
     {
-        using var auth = new SystemAuthenticator(authority);
+        using var auth = new SystemAuthenticator(clientData);
 
-        return await auth.GetTokens(clientId, publicAndPrivateJwk, scopes);
+        return await auth.GetTokens();
     }
 
     private static async Task Out(string message)

@@ -65,6 +65,13 @@ public static class ClientAssertionBuilder
     private static SigningCredentials GetClientAssertionSigningCredentials(string jwk)
     {
         var securityKey = new JsonWebKey(jwk);
-        return new SigningCredentials(securityKey, SecurityAlgorithms.RsaSha256);
+
+        var alg = securityKey.Alg;
+        if (string.IsNullOrEmpty(alg))
+        {
+            alg = SecurityAlgorithms.RsaSha256;
+        }
+
+        return new SigningCredentials(securityKey, alg);
     }
 }
