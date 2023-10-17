@@ -42,6 +42,8 @@ internal static class Program
             return;
         }
 
+        await Out("Waiting 20 seconds for HelseID cache to load the client configuration...");
+
         // Wait for the client configuration to be loaded into HelseID's runtime cache (worst case 20 seconds for the test environment)
         // HelseID will improve this in the future
         await Task.Delay(20000);
@@ -66,6 +68,8 @@ internal static class Program
             await Out($"Client status is {clientStatus}. Aborting ...");
             return;
         }
+
+        await Out("Client is active");
 
         /*
          * Step 4: Get an access token for each resource (audience)
@@ -122,6 +126,8 @@ internal static class Program
     {
         string confirmationUri = config.Selvbetjening.ConfirmationUri.Replace("<client_id>", clientId).Replace("<port>", config.LocalHttpServer.RedirectPort.ToString()).Replace("<path>", redirectPath);
         string confirmationStatus = "";
+
+        await Out("Waiting or user to confirm client...");
 
         using (var browserRunner = new BrowserRunner(redirectUri, $"/{config.LocalHttpServer.RedirectPath}", config.LocalHttpServer.HtmlTitle, config.LocalHttpServer.HtmlBody))
         {
