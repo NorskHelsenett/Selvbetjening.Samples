@@ -36,6 +36,11 @@ public class SystemAuthenticator : IDisposable
             throw new Exception($"Failed getting client credentials tokens: {tokenResponse.Error}");
         }
 
+        if (_clientData.UseDPoP && tokenResponse.TokenType != "DPoP")
+        {
+            throw new Exception($"Expected 'DPoP' token type, but received '{tokenResponse.TokenType}' token");
+        }
+
         return new Tokens(tokenResponse.AccessToken!, tokenResponse.RefreshToken!);
     }
 
