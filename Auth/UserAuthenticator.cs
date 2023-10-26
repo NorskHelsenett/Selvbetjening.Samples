@@ -53,7 +53,8 @@ public sealed class UserAuthenticator : IDisposable
         // ///////////////////////
         // Perfom user login, uses the /authorize endpoint in HelseID
         // Use the Resource-parameter to indicate which APIs you want tokens for
-        // Use the Scope-parameter to indicate which scopes you want for these API-s
+        // Use the Scope-parameter to indicate which scopes you want for these APIs
+
         var clientAssertionPayload = ClientAssertionBuilder.GetClientAssertion(_clientData.ClientId, _clientData.Jwk.PublicAndPrivateValue, _clientData.Authority, _clientData.OrganizationNumber);
 
         string scopes = string.Join(" ", _clientData.Resources.Select(r => string.Join(" ", r.Scopes)));
@@ -93,8 +94,7 @@ public sealed class UserAuthenticator : IDisposable
         ///////////////////////////////////////////////////////////////////////
         // User login has finished, now we want to request tokens from the /token endpoint
         // We add a Resource parameter indication that we want scopes for API 1
-        // Note: OidcClient currently does not support DPoP, meaning that the first access
-        // retrieved will be a bearer token which will not be used.
+
         var firstResource = resourcesToGetTokensFor.First();
 
         var parameters = new Parameters
