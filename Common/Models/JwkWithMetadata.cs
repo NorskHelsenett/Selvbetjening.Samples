@@ -8,15 +8,15 @@ public class JwkWithMetadata
     public string PublicAndPrivateValue { get; }
     public string PublicValue { get; }
 
-    public JwkWithMetadata(string publicAndPrivateValue, string publicValue, string defaultAlgorithm)
+    public JwkWithMetadata(string publicAndPrivateValue, string publicValue = "")
     {
         PublicAndPrivateValue = publicAndPrivateValue;
         PublicValue = publicValue;
 
         Algorithm = new JsonWebKey(publicAndPrivateValue).Alg;
-        if (string.IsNullOrEmpty(Algorithm))
+        if (string.IsNullOrWhiteSpace(Algorithm))
         {
-            Algorithm = defaultAlgorithm;
+            throw new Exception("JWK must include the 'alg' parameter");
         }
     }
 }

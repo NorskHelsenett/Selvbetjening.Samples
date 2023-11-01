@@ -67,9 +67,9 @@ public static class ClientAssertionBuilder
         var securityKey = new JsonWebKey(jwk);
 
         var alg = securityKey.Alg;
-        if (string.IsNullOrEmpty(alg))
+        if (string.IsNullOrWhiteSpace(alg))
         {
-            alg = SecurityAlgorithms.RsaSha256;
+            throw new Exception("JWK must include the 'alg' parameter");
         }
 
         return new SigningCredentials(securityKey, alg);

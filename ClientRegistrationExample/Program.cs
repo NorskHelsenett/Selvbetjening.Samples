@@ -77,6 +77,7 @@ internal static class Program
 
         if (config.App.UserLogin)
         {
+            await Out("Logging in user...");
             // Authorization code with PKCE
             await LoginUserAndPrintAccessTokens(config, jwk, clientId, redirectUri, redirectPath);
         }
