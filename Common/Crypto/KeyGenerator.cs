@@ -30,7 +30,7 @@ public static class KeyGenerator
         string serializedJwkWithPrivateKey = Serialize(jwkWithPrivateKey, false);
         string serializedJwkWithoutPrivateKey = Serialize(jwkWithoutPrivateKey, false);
 
-        return new (serializedJwkWithPrivateKey, serializedJwkWithoutPrivateKey, alg);
+        return new(serializedJwkWithPrivateKey, serializedJwkWithoutPrivateKey);
     }
 
     private static string Serialize(JsonWebKey jwk, bool indented = false)

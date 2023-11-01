@@ -1,10 +1,10 @@
 ﻿using Auth;
 using Auth.Utils;
 using ClientUpdateExample.Configuration;
+using Common.Crypto;
 using Common.Models;
 using Common.Models.Response;
 using Microsoft.Extensions.Configuration;
-using Microsoft.IdentityModel.Tokens;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -16,7 +16,7 @@ internal static class Program
     {
         var config = GetConfig();
 
-        using var authHttpClient = new AuthHttpClient(config.HelseId.UseDPoP ? new JwkWithMetadata(config.Client.Jwk, "", SecurityAlgorithms.RsaSha512) : null);
+        using var authHttpClient = new AuthHttpClient(config.HelseId.UseDPoP ? new JwkWithMetadata(config.Client.Jwk) : null);
 
         var update = new ClientUpdate
         {
@@ -38,7 +38,7 @@ internal static class Program
         }
 
         // *** Uncomment to update the client secret ***
-        // var newJwk = KeyGenerator.GenerateJwk();
+        // var newJwk = KeyGenerator.GenerateRsaJwk();
         // await UpdateClientSecret(config, authHttpClient, newJwk);
     }
 
@@ -49,9 +49,9 @@ internal static class Program
         await authHttpClient.Put(config.Selvbetjening.ClientUri, update, accessToken: accessToken);
     }
 
-    private static async Task UpdateClientSecret(Config config, AuthHttpClient authHttpClient, (string publicJwk, string publicAndPrivateJwk) newJwk)
+    private static async Task UpdateClientSecret(Config config, AuthHttpClient authHttpClient, JwkWithMetadata newJwk)
     {
-        var clientSecretUpdateResponse = await UpdateClientSecret(authHttpClient, config, newJwk.publicJwk);
+        var clientSecretUpdateResponse = await UpdateClientSecret(authHttpClient, config, newJwk.PublicValue);
 
         await Out($"New client secret expiration: {clientSecretUpdateResponse.Expiration}");
     }
@@ -69,7 +69,7 @@ internal static class Program
         {
             Authority = config.HelseId.Authority,
             ClientId = config.Client.ClientId,
-            Jwk = new JwkWithMetadata(config.Client.Jwk, "", SecurityAlgorithms.RsaSha512),
+            Jwk = new JwkWithMetadata(config.Client.Jwk),
             Scopes = new[] { SelvbetjeningClientScope },
             UseDPoP = config.HelseId.UseDPoP,
         };
