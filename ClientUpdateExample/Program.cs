@@ -107,6 +107,11 @@ internal static class Program
             throw new Exception("Config is null.");
         }
 
+        if (config.Client.Jwk.First() != '{')
+        {
+            config.Client.Jwk = File.ReadAllText(config.Client.Jwk);
+        }
+
         return config;
     }
 
