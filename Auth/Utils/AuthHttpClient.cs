@@ -1,6 +1,7 @@
 ﻿using Common.Models;
 using IdentityModel.Client;
 using System.Net.Http.Headers;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -11,9 +12,11 @@ public class AuthHttpClient : IDisposable
     private readonly HttpClient _httpClient;
     private readonly JwkWithMetadata? _dPoPKey;
 
-    public AuthHttpClient(JwkWithMetadata? dPoPKey = null)
+    public AuthHttpClient(JwkWithMetadata? dPoPKey = null, bool logHttp = false)
     {
-        _httpClient = new HttpClient();
+        _httpClient = logHttp
+            ? new HttpClient(new RawHttpLoggingHandler(new HttpClientHandler()))
+            : new HttpClient();
         _dPoPKey = dPoPKey;
     }
 
@@ -26,7 +29,7 @@ public class AuthHttpClient : IDisposable
 
     public async Task<ResponseType> Post<RequestType, ResponseType>(string uri, RequestType body, string? accessToken = null, IDictionary<string, string>? headers = null)
     {
-        string jsonBody = JsonSerializer.Serialize(body, _jsonSerializerOptions);
+        string jsonBody = body is string ? (body as string)! : JsonSerializer.Serialize(body, _jsonSerializerOptions);
         string jsonResponse = await Post(uri, jsonBody, accessToken, headers);
 
         return Deserialize<ResponseType>(jsonResponse);
@@ -69,7 +72,7 @@ public class AuthHttpClient : IDisposable
     {
         var requestMessage = CreateRequestMessage(uri, accessToken, headers, method);
 
-        requestMessage.Content = new StringContent(body, MediaTypeHeaderValue.Parse("application/json"));
+        requestMessage.Content = new StringContent(body, Encoding.UTF8, MediaTypeHeaderValue.Parse("application/json"));
 
         var response = await _httpClient.SendAsync(requestMessage);
 
