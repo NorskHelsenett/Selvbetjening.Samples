@@ -4,6 +4,8 @@ using IdentityModel;
 using IdentityModel.Client;
 using IdentityModel.OidcClient;
 using IdentityModel.OidcClient.DPoP;
+using Microsoft.IdentityModel.Protocols;
+using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 
 namespace Auth;
 
@@ -11,6 +13,7 @@ public sealed class UserAuthenticator : IDisposable
 {
     private readonly UserClientData _clientData;
     private readonly HttpClient _httpClient;
+    private readonly ConfigurationManager<OpenIdConnectConfiguration> _oidcConfigManager;
 
     private string _tokenEndpoint = string.Empty;
 
@@ -18,6 +21,10 @@ public sealed class UserAuthenticator : IDisposable
     {
         _clientData = clientData;
         _httpClient = new HttpClient();
+        _oidcConfigManager = new ConfigurationManager<OpenIdConnectConfiguration>(
+            $"{_clientData.Authority}/.well-known/openid-configuration",
+            new OpenIdConnectConfigurationRetriever()
+        );
     }
 
     public async Task<ResourceTokens> LoginAndGetTokens(
@@ -30,24 +37,8 @@ public sealed class UserAuthenticator : IDisposable
 
         ValidateResources(resources);
 
-        var disco = await _httpClient.GetDiscoveryDocumentAsync(_clientData.Authority);
-
-        if (disco == null)
-        {
-            throw new Exception("Could not get discovery document.");
-        }
-
-        if (disco.IsError)
-        {
-            throw new Exception(disco.Error);
-        }
-
-        if (disco.TokenEndpoint == null)
-        {
-            throw new Exception("Discovery document's token endpoint is not set.");
-        }
-
-        _tokenEndpoint = disco.TokenEndpoint;
+        var oidcConfig = await _oidcConfigManager.GetConfigurationAsync();
+        _tokenEndpoint = oidcConfig.TokenEndpoint;
 
         // 1. Logging in the user
         // ///////////////////////
