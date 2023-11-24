@@ -2,6 +2,8 @@
 using Common.Models;
 using IdentityModel;
 using IdentityModel.Client;
+using Microsoft.IdentityModel.Protocols;
+using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 
 namespace Auth;
 
@@ -9,25 +11,29 @@ public class SystemAuthenticator : IDisposable
 {
     private readonly SystemClientData _clientData;
     private readonly HttpClient _httpClient;
-    private DiscoveryDocumentResponse? _cachedDiscoveryDocument;
+    private readonly ConfigurationManager<OpenIdConnectConfiguration> _oidcConfigManager;
 
     public SystemAuthenticator(SystemClientData clientData)
     {
         _clientData = clientData;
         _httpClient = new HttpClient();
+        _oidcConfigManager = new ConfigurationManager<OpenIdConnectConfiguration>(
+            $"{_clientData.Authority}/.well-known/openid-configuration",
+            new OpenIdConnectConfigurationRetriever()
+        );
     }
 
     public async Task<Tokens> GetTokens()
     {
-        var disco = await GetDisco();
+        var oidcConfig = await GetOidcConfig();
 
-        var request = CreateClientCredentialsTokenRequest(disco.TokenEndpoint!);
+        var request = CreateClientCredentialsTokenRequest(oidcConfig.TokenEndpoint);
 
         var tokenResponse = await _httpClient.RequestClientCredentialsTokenAsync(request);
 
         if (_clientData.UseDPoP && tokenResponse.IsError && tokenResponse.Error == "use_dpop_nonce" && !string.IsNullOrEmpty(tokenResponse.DPoPNonce))
         {
-            request = CreateClientCredentialsTokenRequest(disco.TokenEndpoint!, dPoPNonce: tokenResponse.DPoPNonce);
+            request = CreateClientCredentialsTokenRequest(oidcConfig.TokenEndpoint, dPoPNonce: tokenResponse.DPoPNonce);
             tokenResponse = await _httpClient.RequestClientCredentialsTokenAsync(request);
         }
 
@@ -58,23 +64,9 @@ public class SystemAuthenticator : IDisposable
         };
     }
 
-    private async Task<DiscoveryDocumentResponse> GetDisco()
+    private async Task<OpenIdConnectConfiguration> GetOidcConfig()
     {
-        if (_cachedDiscoveryDocument != null)
-        {
-            return _cachedDiscoveryDocument;
-        }
-
-        var disco = await _httpClient.GetDiscoveryDocumentAsync(_clientData.Authority);
-
-        if (disco.IsError)
-        {
-            throw new Exception($"Failed getting discovery document: {disco.Error}");
-        }
-
-        _cachedDiscoveryDocument = disco;
-
-        return _cachedDiscoveryDocument;
+        return await _oidcConfigManager.GetConfigurationAsync();
     }
 
     public void Dispose()
