@@ -1,5 +1,7 @@
 # For systemleverandører med tykklienter
 
+En tykklient er en applikasjon med programvare som kjører lokalt på sluttbrukerens datamaskin. En slik applikasjon forutsetter en individuell konfigurasjon for å kunne fungere som en HelseID-klient.
+
 For enkelte brukere kan det være krevende å sette opp en klientkonfigurasjon i Selvbetjening for HelseID.
 
 - Først må man velge riktig versjon av system/fagapplikasjon
@@ -10,11 +12,11 @@ Dette kan være utfordrende for sluttbrukere uten inngående kjennskap til hvord
 
 Derfor vil Selvbetjening for HelseID her presentere 3 alternativer for å redusere kompleksiteten for sluttbrukerne.
 
-[Helautomatisering](#alternativ-1-helautomatisering-via-api) og [manuell bistand](#alternativ-3-helmanuell-bistand-fra-systemleverandør) er ytterpunktene, med [delvis automatisering ved hjelp av pakkekonfigurasjon](#alternativ-2-delvis-automatisering-ved-hjelp-av-pakkekonfigurasjon) som en mellomting.
+[Helautomatisering](#alternativ-1-anbefalt-helautomatisering-via-api) (anbefalt) og [manuell bistand](#alternativ-3-helmanuell-bistand-fra-systemleverandør) er ytterpunktene, med [delvis automatisering ved hjelp av pakkekonfigurasjon](#alternativ-2-delvis-automatisering-ved-hjelp-av-pakkekonfigurasjon) som en mellomting.
 
 *For enkelhets skyld omtales en kunde som en fastlege, og et system/fagapplikasjon som EPJ. Dette er eksempler.*
 
-## Alternativ 1: Helautomatisering via API
+## Alternativ 1 (anbefalt): Helautomatisering via API
 
 Dette alternativet medfører integrasjon mot Selvbetjenings API, og dermed kodeendring fra systemleverandørens side.
 
@@ -47,7 +49,7 @@ Systemleverandøren konfigurerer én eller flere "pakker" av tjenester og scopes
 
 Ved bruk av denne lenken vil EPJ, tjenester og scopes være konfigurert på forhånd i Selvbetjening for HelseID.
 
-Men, man kommer ikke utenom å måtte håndtere nøkkelpar manuelt i selvbetjeningsløsningen: Enten ved å laste opp egengenerert offentlig nøkkel, eller ved å laste ned kryptert konfigurasjonsfil som inneholder nøkkelpar.
+Fastlegen må manuelt håndtere nøkkelpar i selvbetjeningsløsningen. Dette gjøres ved å laste ned en kryptert konfigurasjonsfil som inneholder nøkkelpar.
 
 Systemleverandøren må lage en steg-for-steg-veiledning som forklarer hvordan fastlegen kan angi klient-id og nøkkelpar i sin EPJ-installasjon.
 
@@ -55,7 +57,7 @@ Systemleverandøren må lage en steg-for-steg-veiledning som forklarer hvordan f
 
 I god tid før nøkkelparets gyldighet løper ut, må fastlegen logge inn i Selvbetjening og generere et nytt nøkkelpar. Dette må deretter angis i EPJ-installasjonen. Hvis dette ikke gjøres tidsnok, vil det føre til driftsstans for EPJ-installasjonen, fordi HelseID-integrasjonen vil feile ved utløpt nøkkelpar.
 
-**Merk**: Selvbetjenings API har et eget endepunkt for å oppdatere nøkkelpar, uten at systemleverandøren trenger å implementere den fulle flyten beskrevet i [alternativ 1](#alternativ-1-helautomatisering-via-api). En integrasjon begrenset til nøkkelpar vil medføre en liten, og svært enkel, kodeendring for systemleverandøren. En slik integrasjon vil bety at fastlegen bare trenger å logge inn i Selvbetjening én gang, ved førstegangsoppsett, og generere nøkkelpar manuelt. Deretter håndteres nøkkelparvedlikeholdet automatisk og sømløst.
+**Merk**: Selvbetjenings-API-et har et eget endepunkt for å oppdatere nøkkelpar, uten at systemleverandøren trenger å implementere den fulle flyten beskrevet i [alternativ 1](#alternativ-1-helautomatisering-via-api). En integrasjon begrenset til nøkkelpar vil medføre en liten, og svært enkel, kodeendring for systemleverandøren. En slik integrasjon vil bety at fastlegen bare trenger å logge inn i Selvbetjening én gang, ved førstegangsoppsett, og generere nøkkelpar manuelt. Deretter håndteres nøkkelparvedlikeholdet automatisk og sømløst.
 
 [Oppdatering av nøkkelpar via API er dokumentert her](../README.md#updating-the-client)
 
