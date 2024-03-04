@@ -45,7 +45,7 @@ sequenceDiagram
 
 Dette alternativet medfører ingen kodeendring hos systemleverandøren.
 
-Systemleverandøren konfigurerer én eller flere "pakker" av tjenester og scopes i Selvbetjening. Hver av disse pakkene vil ha en id, som kan refereres i en lenke systemleverandøren sender til fastlegen.
+Systemleverandøren konfigurerer én eller flere "pakker" av api scopes i Selvbetjening. Hver av disse pakkene vil ha en id, som kan refereres i en lenke systemleverandøren sender til fastlegen. Du kan sette opp pakker under fanen "pakker" på klientsystemet i Selvbetjening.
 
 Ved bruk av denne lenken vil EPJ, tjenester og scopes være konfigurert på forhånd i Selvbetjening for HelseID.
 
