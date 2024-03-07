@@ -1,33 +1,30 @@
 ﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
-using System.Text;
 
 namespace Auth.Utils;
 
 public sealed class ContainedHttpServer : IDisposable
 {
     private readonly IWebHost _host;
-    private TaskCompletionSource<string> _source = new();
+    private TaskCompletionSource<string> _callbackResultSource = new();
     private readonly string _htmlTitle;
     private readonly string _htmlBody;
     private readonly int _timeoutInSeconds;
-    private readonly string _callbackUrl;
-    private readonly Dictionary<string, Action<HttpContext>>? _routes;
+    private readonly string _callbackPath;
 
     public ContainedHttpServer(
         string host,
-        string callbackUrl,
+        string callbackPath,
         string htmlTitle,
         string htmlBody,
-        int timeoutInSeconds = 300,
-        Dictionary<string, Action<HttpContext>>? routes = null)
+        int timeoutInSeconds = 300
+    )
     {
         _htmlTitle = htmlTitle;
         _htmlBody = htmlBody;
         _timeoutInSeconds = timeoutInSeconds;
-        _callbackUrl = callbackUrl;
-        _routes = routes;
+        _callbackPath = callbackPath;
 
         _host = new WebHostBuilder()
             .UseKestrel()
@@ -47,32 +44,15 @@ public sealed class ContainedHttpServer : IDisposable
     {
         app.Run(async ctx =>
         {
-            if (_routes?.ContainsKey(ctx.Request.Path.Value!) == true)
-            {
-                _routes[ctx.Request.Path.Value!](ctx);
-            }
-            else if (ctx.Request.Path.Equals(_callbackUrl))
+            if (ctx.Request.Path.Equals(_callbackPath))
             {
                 if (ctx.Request.Method == "GET")
                 {
-                    SetResult(ctx.Request.QueryString.Value!, ctx);
-                }
-                else if (ctx.Request.Method == "POST")
-                {
-                    if (!ctx.Request.ContentType!.Equals("application/x-www-form-urlencoded", StringComparison.OrdinalIgnoreCase))
-                    {
-                        ctx.Response.StatusCode = 415;
-                    }
-                    else
-                    {
-                        using var sr = new StreamReader(ctx.Request.Body, Encoding.UTF8);
-                        var body = await sr.ReadToEndAsync();
-                        SetResult(body, ctx);
-                    }
+                    await SetResult(ctx.Request.QueryString.Value!, ctx);
                 }
                 else
                 {
-                    ctx.Response.StatusCode = 405;
+                    ctx.Response.StatusCode = StatusCodes.Status405MethodNotAllowed;
                 }
             }
             else
@@ -82,7 +62,7 @@ public sealed class ContainedHttpServer : IDisposable
         });
     }
 
-    private void SetResult(string value, HttpContext ctx)
+    private async Task SetResult(string value, HttpContext ctx)
     {
         string html = $@"
 <!DOCTYPE html>
@@ -99,21 +79,25 @@ public sealed class ContainedHttpServer : IDisposable
         {
             ctx.Response.StatusCode = 200;
             ctx.Response.ContentType = "text/html";
-            ctx.Response.WriteAsync(html);
-            ctx.Response.Body.FlushAsync();
+            await ctx.Response.WriteAsync(html);
+            await ctx.Response.Body.FlushAsync();
 
-            var source = _source;
+            var source = _callbackResultSource;
 
-            _source = new TaskCompletionSource<string>();
+            _callbackResultSource = new TaskCompletionSource<string>();
 
-            source.TrySetResult(value);
+            // Schedule setting the result on the thread pool so that the request handler can finish before the result is handled.
+            _ = Task.Run(() =>
+            {
+                source.TrySetResult(value);
+            });
         }
         catch (Exception)
         {
             ctx.Response.StatusCode = 400;
             ctx.Response.ContentType = "text/html";
-            ctx.Response.WriteAsync("<h1>Invalid request.</h1>");
-            ctx.Response.Body.Flush();
+            await ctx.Response.WriteAsync("<h1>Invalid request.</h1>");
+            await ctx.Response.Body.FlushAsync();
         }
     }
 
@@ -121,12 +105,14 @@ public sealed class ContainedHttpServer : IDisposable
     {
         timeoutInSeconds ??= _timeoutInSeconds;
 
+        var source = _callbackResultSource;
+
         Task.Run(async () =>
         {
             await Task.Delay(timeoutInSeconds.Value * 1000);
-            _source.TrySetCanceled();
+            source.TrySetCanceled();
         });
 
-        return _source.Task;
+        return source.Task;
     }
 }

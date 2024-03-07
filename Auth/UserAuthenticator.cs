@@ -1,9 +1,14 @@
-﻿using Auth.Utils;
+﻿using System.Security.Cryptography;
+using System.Text;
+using Auth.Utils;
 using Common.Models;
 using IdentityModel;
 using IdentityModel.Client;
 using IdentityModel.OidcClient;
+using IdentityModel.OidcClient.Browser;
 using IdentityModel.OidcClient.DPoP;
+using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Protocols;
 using Microsoft.IdentityModel.Protocols.OpenIdConnect;
 
@@ -48,19 +53,23 @@ public sealed class UserAuthenticator : IDisposable
 
         var clientAssertionPayload = ClientAssertionBuilder.GetClientAssertion(_clientData.ClientId, _clientData.Jwk.PublicAndPrivateValue, _clientData.Authority, _clientData.OrganizationNumber);
 
-        string scopes = string.Join(" ", _clientData.Resources.Select(r => string.Join(" ", r.Scopes)));
+        string resourceScope = string.Join(" ", _clientData.Resources.Select(r => string.Join(" ", r.Scopes)));
         string[] configuredResources = _clientData.Resources.Select(r => r.Name).ToArray();
         string[] resourcesToGetTokensFor = resources?.Length > 0 ? resources : configuredResources;
+
+        var redirectUri = $"{_clientData.RedirectHost}{_clientData.RedirectPath}";
+        var scope = $"openid offline_access {resourceScope}";
 
         var options = new OidcClientOptions
         {
             Authority = _clientData.Authority,
             LoadProfile = false,
-            RedirectUri = $"{_clientData.RedirectHost}{_clientData.RedirectPath}",
-            Scope = $"openid offline_access {scopes}",
-            ClientId = _clientData.ClientId,
-            Resource = configuredResources,
+            RedirectUri = redirectUri,
             ClientAssertion = clientAssertionPayload,
+            LoggerFactory = LoggerFactory.Create(builder => builder
+                .AddConsole()
+                .SetMinimumLevel(LogLevel.Information)
+            )
         };
 
         if (_clientData.UseDPoP)
@@ -72,14 +81,11 @@ public sealed class UserAuthenticator : IDisposable
 
         var oidcClient = new OidcClient(options);
 
-        var state = await oidcClient.PrepareLoginAsync();
-        using var browserRunner = new BrowserRunner(
-            _clientData.RedirectHost,
-            _clientData.RedirectPath,
-            htmlTitle,
-            htmlBody,
-            targetUrl: state.StartUrl);
-        var response = await browserRunner.PostAndRunUntilCallback();
+        var authorizeState = await PrepareLoginWithPar(oidcClient, oidcConfig, scope, configuredResources);
+
+        var browserOptions = new BrowserOptions(authorizeState.StartUrl, redirectUri);
+        using var browserRunner = new SystemBrowserRunner(htmlTitle, htmlBody);
+        var browserResult = await browserRunner.InvokeAsync(browserOptions, default);
 
         // 2. Retrieving an access token for API 1, and a refresh token
         ///////////////////////////////////////////////////////////////////////
@@ -93,7 +99,7 @@ public sealed class UserAuthenticator : IDisposable
                 { "resource", firstResource }
             };
 
-        var loginResult = await oidcClient.ProcessResponseAsync(response, state, parameters);
+        var loginResult = await oidcClient.ProcessResponseAsync(browserResult.Response, authorizeState, parameters);
 
         if (loginResult.IsError)
         {
@@ -128,7 +134,7 @@ public sealed class UserAuthenticator : IDisposable
 
     public async Task<ResourceTokens> GetTokens(string refreshToken, string resource)
     {
-        ValidateResources(new[] { resource });
+        ValidateResources([resource]);
 
         var refreshTokenRequest = CreateRefreshTokenRequest(refreshToken, resource);
 
@@ -156,8 +162,43 @@ public sealed class UserAuthenticator : IDisposable
         }
 
         return new ResourceTokens(
-            new[] { new ResourceToken(resource, tokenResponse.AccessToken) },
+            [new ResourceToken(resource, tokenResponse.AccessToken)],
             tokenResponse.RefreshToken);
+    }
+
+    private async Task<AuthorizeState> PrepareLoginWithPar(OidcClient oidcClient, OpenIdConnectConfiguration oidcConfig, string scope, string[] resources)
+    {
+        var state = await oidcClient.PrepareLoginAsync();
+
+        var challengeBytes = SHA256.HashData(Encoding.UTF8.GetBytes(state.CodeVerifier));
+        var codeChallenge = WebEncoders.Base64UrlEncode(challengeBytes);
+
+        var parRequest = new PushedAuthorizationRequest
+        {
+            // NOTE: OpenIdConnectConfiguration does currently not include a property for this endpoint
+            Address = (string)oidcConfig.AdditionalData["pushed_authorization_request_endpoint"],
+            ClientId = _clientData.ClientId,
+            ClientAssertion = oidcClient.Options.ClientAssertion,
+            RedirectUri = oidcClient.Options.RedirectUri,
+            Scope = scope,
+            Resource = resources,
+            ResponseType = OidcConstants.ResponseTypes.Code,
+            ClientCredentialStyle = ClientCredentialStyle.PostBody,
+            CodeChallenge = codeChallenge,
+            CodeChallengeMethod = OidcConstants.CodeChallengeMethods.Sha256,
+            State = state.State,
+        };
+
+        var parResponse = await _httpClient.PushAuthorizationAsync(parRequest);
+        if (parResponse.IsError)
+        {
+            throw new Exception($"Failed PAR: {parResponse.ErrorType}: {parResponse.Error}");
+        }
+
+        // Override start URL with URL using PAR
+        state.StartUrl = $"{oidcConfig.AuthorizationEndpoint}?client_id={_clientData.ClientId}&request_uri={parResponse.RequestUri}"; ;
+
+        return state;
     }
 
     private RefreshTokenRequest CreateRefreshTokenRequest(string refreshToken, string resource, string? dPoPNonce = null)

@@ -4,6 +4,7 @@ using ClientRegistrationExample.Configuration;
 using Common.Crypto;
 using Common.Models;
 using Common.Models.Response;
+using IdentityModel.OidcClient.Browser;
 using Microsoft.Extensions.Configuration;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -19,7 +20,7 @@ internal static class Program
         var config = GetConfig();
 
         var jwk = KeyGenerator.GenerateRsaJwk();
-        
+
         using var authHttpClient = new AuthHttpClient(config.HelseId.UseDPoP ? jwk : null);
         string redirectUri = $"http://localhost:{config.LocalHttpServer.RedirectPort}";
         string redirectPath = $"/{config.LocalHttpServer.RedirectPath}";
@@ -126,20 +127,19 @@ internal static class Program
     private static async Task<string> ConfirmClientDraft(Config config, string clientId, string redirectUri, string redirectPath)
     {
         string confirmationUri = config.Selvbetjening.ConfirmationUri.Replace("<client_id>", clientId).Replace("<port>", config.LocalHttpServer.RedirectPort.ToString()).Replace("<path>", redirectPath);
-        string confirmationStatus = "";
 
         await Out("Waiting or user to confirm client...");
 
-        using (var browserRunner = new BrowserRunner(redirectUri, $"/{config.LocalHttpServer.RedirectPath}", config.LocalHttpServer.HtmlTitle, config.LocalHttpServer.HtmlBody))
-        {
-            string confirmationResult = await browserRunner.RunUntilCallback(confirmationUri);
+        var browserOptions = new BrowserOptions(confirmationUri, new Uri(new Uri(redirectUri), config.LocalHttpServer.RedirectPath).ToString());
 
-            var confirmationDict = QuerystringToDictionary(confirmationResult);
+        using var browserRunner = new SystemBrowserRunner(config.LocalHttpServer.HtmlTitle, config.LocalHttpServer.HtmlBody);
+        var result = await browserRunner.InvokeAsync(browserOptions, default);
 
-            confirmationStatus = confirmationDict["status"];
+        var confirmationDict = QuerystringToDictionary(result.Response);
 
-            await Out($"Status received: {confirmationStatus}");
-        }
+        var confirmationStatus = confirmationDict["status"];
+
+        await Out($"Status received: {confirmationStatus}");
 
         return confirmationStatus;
     }
@@ -184,7 +184,7 @@ internal static class Program
 
         var initialResourceTokens = await LoginAndGetTokens(
             auth,
-            new[] { SelvbetjeningResource },
+            [SelvbetjeningResource],
             config.LocalHttpServer.HtmlTitle,
             config.LocalHttpServer.HtmlBody);
 
