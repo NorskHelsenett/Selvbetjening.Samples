@@ -9,7 +9,7 @@
   <ItemGroup>
 	  <FrameworkReference Include="Microsoft.AspNetCore.App" />
 	  <PackageReference Include="IdentityModel" Version="7.0.0-preview.4" />
-	  <PackageReference Include="IdentityModel.OidcClient" Version="6.0.0-preview.1" />
+	  <PackageReference Include="IdentityModel.OidcClient" Version="6.0.0-preview.2" />
 	  <PackageReference Include="IdentityModel.OidcClient.DPoP" Version="6.0.0-preview.1" />
 	  <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="7.4.0" />
 	  <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="7.4.0" />
