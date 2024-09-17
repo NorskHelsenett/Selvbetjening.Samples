@@ -86,11 +86,7 @@ public sealed class ContainedHttpServer : IDisposable
 
             _callbackResultSource = new TaskCompletionSource<string>();
 
-            // Schedule setting the result on the thread pool so that the request handler can finish before the result is handled.
-            _ = Task.Run(() =>
-            {
-                source.TrySetResult(value);
-            });
+            source.TrySetResult(value);
         }
         catch (Exception)
         {

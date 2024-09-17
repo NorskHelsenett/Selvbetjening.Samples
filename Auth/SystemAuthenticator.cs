@@ -13,10 +13,12 @@ public class SystemAuthenticator : IDisposable
     private readonly HttpClient _httpClient;
     private readonly ConfigurationManager<OpenIdConnectConfiguration> _oidcConfigManager;
 
-    public SystemAuthenticator(SystemClientData clientData)
+    public SystemAuthenticator(SystemClientData clientData, bool logHttp = false)
     {
         _clientData = clientData;
-        _httpClient = new HttpClient();
+        _httpClient = logHttp
+            ? new HttpClient(new RawHttpLoggingHandler(new HttpClientHandler()))
+            : new HttpClient();
         _oidcConfigManager = new ConfigurationManager<OpenIdConnectConfiguration>(
             $"{_clientData.Authority}/.well-known/openid-configuration",
             new OpenIdConnectConfigurationRetriever()
@@ -31,7 +33,7 @@ public class SystemAuthenticator : IDisposable
 
         var tokenResponse = await _httpClient.RequestClientCredentialsTokenAsync(request);
 
-        if (_clientData.UseDPoP && tokenResponse.IsError && tokenResponse.Error == "use_dpop_nonce" && !string.IsNullOrEmpty(tokenResponse.DPoPNonce))
+        if (RequiresDPoPNonce(tokenResponse))
         {
             request = CreateClientCredentialsTokenRequest(oidcConfig.TokenEndpoint, dPoPNonce: tokenResponse.DPoPNonce);
             tokenResponse = await _httpClient.RequestClientCredentialsTokenAsync(request);
@@ -50,15 +52,77 @@ public class SystemAuthenticator : IDisposable
         return new Tokens(tokenResponse.AccessToken!, tokenResponse.RefreshToken!);
     }
 
+    public async Task<Tokens> ExchangeToken(string subjectAccessToken)
+    {
+        var oidcConfig = await GetOidcConfig();
+
+        var request = CreateTokenExchangeRequest(oidcConfig.TokenEndpoint!, subjectAccessToken);
+
+        var tokenResponse = await _httpClient.RequestTokenExchangeTokenAsync(request);
+
+        if (RequiresDPoPNonce(tokenResponse))
+        {
+            request = CreateTokenExchangeRequest(oidcConfig.TokenEndpoint, subjectAccessToken, dPoPNonce: tokenResponse.DPoPNonce);
+            tokenResponse = await _httpClient.RequestTokenExchangeTokenAsync(request);
+        }
+
+        if (tokenResponse.IsError)
+        {
+            throw new Exception($"Failed exchanging token: {tokenResponse.Error}");
+        }
+
+        if (_clientData.UseDPoP && tokenResponse.TokenType != "DPoP")
+        {
+            throw new Exception($"Expected 'DPoP' token type, but received '{tokenResponse.TokenType}' token");
+        }
+
+        return new Tokens(tokenResponse.AccessToken!, tokenResponse.RefreshToken!);
+    }
+
+    private bool RequiresDPoPNonce(TokenResponse tokenResponse)
+    {
+        return _clientData.UseDPoP && tokenResponse.IsError && tokenResponse.Error == "use_dpop_nonce" && !string.IsNullOrEmpty(tokenResponse.DPoPNonce);
+    }
+
     private ClientCredentialsTokenRequest CreateClientCredentialsTokenRequest(string tokenEndpoint, string? dPoPNonce = null)
     {
+        var request = CreateTokenRequestBase(tokenEndpoint, dPoPNonce);
         return new ClientCredentialsTokenRequest
         {
-            Address = tokenEndpoint,
-            ClientAssertion = ClientAssertionBuilder.GetClientAssertion(_clientData.ClientId, _clientData.Jwk.PublicAndPrivateValue, _clientData.Authority),
-            ClientId = _clientData.ClientId,
+            Address = request.Address,
+            ClientAssertion = request.ClientAssertion,
+            ClientId = request.ClientId,
+            ClientCredentialStyle = request.ClientCredentialStyle,
+            DPoPProofToken = request.DPoPProofToken,
             Scope = string.Join(" ", _clientData.Scopes),
             GrantType = OidcConstants.GrantTypes.ClientCredentials,
+        };
+    }
+
+    private TokenExchangeTokenRequest CreateTokenExchangeRequest(string tokenEndpoint, string subjectAccessToken, string? dPoPNonce = null)
+    {
+        var request = CreateTokenRequestBase(tokenEndpoint, dPoPNonce);
+        return new TokenExchangeTokenRequest
+        {
+            Address = request.Address,
+            ClientAssertion = request.ClientAssertion,
+            ClientId = request.ClientId,
+            ClientCredentialStyle = request.ClientCredentialStyle,
+            DPoPProofToken = request.DPoPProofToken,
+            Scope = string.Join(" ", _clientData.Scopes),
+            GrantType = OidcConstants.GrantTypes.TokenExchange,
+            SubjectTokenType = OidcConstants.TokenTypeIdentifiers.AccessToken,
+            SubjectToken = subjectAccessToken,
+        };
+    }
+
+    private ProtocolRequest CreateTokenRequestBase(string tokenEndpoint, string? dPoPNonce = null)
+    {
+        return new ProtocolRequest
+        {
+            Address = tokenEndpoint,
+            ClientAssertion = ClientAssertionBuilder.Build(_clientData.ClientId, _clientData.Jwk.PublicAndPrivateValue, _clientData.Authority, assertionDetails: null),
+            ClientId = _clientData.ClientId,
             ClientCredentialStyle = ClientCredentialStyle.PostBody,
             DPoPProofToken = _clientData.UseDPoP ? DPoPProofBuilder.CreateDPoPProof(tokenEndpoint, "POST", _clientData.Jwk, dPoPNonce: dPoPNonce) : null,
         };

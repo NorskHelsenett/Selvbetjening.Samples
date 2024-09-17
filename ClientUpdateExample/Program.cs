@@ -16,11 +16,12 @@ internal static class Program
     {
         var config = GetConfig();
 
-        using var authHttpClient = new AuthHttpClient(config.HelseId.UseDPoP ? new JwkWithMetadata(config.Client.Jwk) : null);
+        using var authHttpClient =
+            new AuthHttpClient(config.HelseId.UseDPoP ? new JwkWithMetadata(config.Client.Jwk) : null);
 
         var update = new ClientUpdate
         {
-            ApiScopes = new[] { SelvbetjeningClientScope, "a_new_scope" },
+            ApiScopes = [SelvbetjeningClientScope, "a_new_scope"],
             AudienceSpecificClientClaims = null,
             ChildOrganizationNumbers = null,
             PostLogoutRedirectUris = null,
@@ -56,11 +57,13 @@ internal static class Program
         await Out($"New client secret expiration: {clientSecretUpdateResponse.Expiration}");
     }
 
-    private static async Task<ClientSecretUpdateResponse> UpdateClientSecret(AuthHttpClient authHttpClient, Config config, string newPublicJwk)
+    private static async Task<ClientSecretUpdateResponse> UpdateClientSecret(AuthHttpClient authHttpClient,
+        Config config, string newPublicJwk)
     {
         string accessToken = await GetAccessToken(config);
 
-        return await authHttpClient.Post<string, ClientSecretUpdateResponse>(config.Selvbetjening.ClientSecretUri, newPublicJwk, accessToken: accessToken);
+        return await authHttpClient.Post<string, ClientSecretUpdateResponse>(config.Selvbetjening.ClientSecretUri,
+            newPublicJwk, accessToken: accessToken);
     }
 
     private static async Task<string> GetAccessToken(Config config)
@@ -70,7 +73,7 @@ internal static class Program
             Authority = config.HelseId.Authority,
             ClientId = config.Client.ClientId,
             Jwk = new JwkWithMetadata(config.Client.Jwk),
-            Scopes = new[] { SelvbetjeningClientScope },
+            Scopes = [SelvbetjeningClientScope],
             UseDPoP = config.HelseId.UseDPoP,
         };
 
@@ -94,9 +97,9 @@ internal static class Program
     private static Config GetConfig()
     {
         var builder = new ConfigurationBuilder()
-                              .SetBasePath(Directory.GetCurrentDirectory())
-                              .AddJsonFile("appsettings.json", optional: false)
-                              .AddJsonFile("appsettings.Local.json", optional: true);
+            .SetBasePath(Directory.GetCurrentDirectory())
+            .AddJsonFile("appsettings.json", optional: false)
+            .AddJsonFile("appsettings.Local.json", optional: true);
 
         IConfiguration configuration = builder.Build();
 
