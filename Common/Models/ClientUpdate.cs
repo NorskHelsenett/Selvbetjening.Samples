@@ -2,10 +2,10 @@
 {
     public class ClientUpdate
     {
-        public string[] ApiScopes { get; set; } = Array.Empty<string>();
-        public AudienceSpecificClientClaim[]? AudienceSpecificClientClaims { get; set; }
-        public string[]? RedirectUris { get; set; }
-        public string[]? PostLogoutRedirectUris { get; set; }
-        public string[]? ChildOrganizationNumbers { get; set; }
+        public required string[] ApiScopes { get; set; } = [];
+        public required AudienceSpecificClientClaim[]? AudienceSpecificClientClaims { get; set; }
+        public required string[]? RedirectUris { get; set; }
+        public required string[]? PostLogoutRedirectUris { get; set; }
+        public required string[]? ChildOrganizationNumbers { get; set; }
     }
 }
