@@ -41,8 +41,6 @@ sequenceDiagram
 
 ## Alternativ 2: Delvis automatisering ved hjelp av pakkekonfigurasjon
 
-> **_MERK:_** Pakkekonfigurasjon er under utvikling, og er derfor ikke tilgjengelig i Selvbetjening for HelseID ennå.
-
 Dette alternativet medfører ingen kodeendring hos systemleverandøren.
 
 Systemleverandøren konfigurerer én eller flere "pakker" av api scopes i Selvbetjening. Hver av disse pakkene vil ha en id, som kan refereres i en lenke systemleverandøren sender til fastlegen. Du kan sette opp pakker under fanen "pakker" på klientsystemet i Selvbetjening.
