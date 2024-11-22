@@ -2,7 +2,7 @@
 
 This tutorial is for creating HelseID clients through [Selvbetjening for HelseID's api](https://api.selvbetjening.test.nhn.no/).
 
-More details can be found at [Utviklerportalen](https://utviklerportal.nhn.no/informasjonstjenester/helseid/tilgang-til-helseid/selvbetjening-manifests/docs/client-api/client-api-overviewmd/).
+More details can be found at [Utviklerportalen](https://utviklerportal.nhn.no/informasjonstjenester/helseid/tilgang-til-helseid/selvbetjening/docs/client-api/client-api-overviewmd/).
 
 After creating a client system with an api key, which is described in the following section, the flow is like this:
 
@@ -42,8 +42,10 @@ Follow the sample code in [ClientRegistrationExample](https://github.com/NorskHe
 
 1. Create the client draft using the `client-drafts` endpoint
 2. Direct the end user to Selvbetjening for HelseID: `/confirm-client/<client_id>?redirectPort=<port>&redirectPath=<path>`, where:
+
 - `<client_id>` is the id of the client draft
 - `<port>` and `<path>` is the port and path to redirect the end user back to your local http server
+
 3. Check the status of the client's access to the specified scopes
 4. Authenticate the end user and request access tokens for the specified apis
 5. You're ready to go
@@ -53,12 +55,13 @@ Follow the sample code in [ClientRegistrationExample](https://github.com/NorskHe
 Look at the sample code in [ClientUpdateExample](https://github.com/NorskHelsenett/Selvbetjening.Samples/tree/main/ClientUpdateExample)
 
 There are two separate endpoints:
+
 1. Updating the client secret
 2. Updating the rest of the client configuration
 
 The update operation will affect all properties in the payload as submitted. If a property is set to null in the payload, the property **will not** be ignored and will be updated in the client configuration.
 
-### Example for redirect uris: ###
+### Example for redirect uris:
 
 If you want to add a redirect uri, you also need to submit the previous redirect uris, along with the rest of the relevant data for the client configuration.  
 If you want to delete a redirect uri, just remove it from the array and call the update endpoint with the rest of the data.  
