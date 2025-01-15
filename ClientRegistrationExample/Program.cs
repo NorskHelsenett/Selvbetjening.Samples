@@ -180,13 +180,9 @@ internal static class Program
             UseDPoP = config.HelseId.UseDPoP,
         };
 
-        using var auth = new UserAuthenticator(clientData);
+        using var auth = new UserAuthenticator(clientData, config.LocalHttpServer.HtmlTitle, config.LocalHttpServer.HtmlBody);
 
-        var initialResourceTokens = await LoginAndGetTokens(
-            auth,
-            [SelvbetjeningResource],
-            config.LocalHttpServer.HtmlTitle,
-            config.LocalHttpServer.HtmlBody);
+        var initialResourceTokens = await LoginAndGetTokens(auth, [SelvbetjeningResource]);
 
         if (initialResourceTokens == null)
         {
@@ -257,13 +253,13 @@ internal static class Program
         return dict.Select(kvp => new Resource(kvp.Key, kvp.Value.ToArray())).ToArray();
     }
 
-    private static async Task<ResourceTokens> LoginAndGetTokens(UserAuthenticator authenticator, string[] resources, string htmlTitle, string htmlBody)
+    private static async Task<ResourceTokens?> LoginAndGetTokens(UserAuthenticator authenticator, string[] resources)
     {
-        ResourceTokens resourceTokens = null!;
+        ResourceTokens? resourceTokens = null;
 
         try
         {
-            resourceTokens = await authenticator.LoginAndGetTokens(resources: resources, htmlTitle: htmlTitle, htmlBody: htmlBody);
+            resourceTokens = await authenticator.LoginAndGetTokens(resources: resources);
         }
         catch (Exception ex)
         {
