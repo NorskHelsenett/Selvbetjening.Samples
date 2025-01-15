@@ -175,8 +175,7 @@ public sealed class UserAuthenticator : IDisposable
 
         var parRequest = new PushedAuthorizationRequest
         {
-            // NOTE: OpenIdConnectConfiguration does currently not include a property for this endpoint
-            Address = (string)oidcConfig.AdditionalData["pushed_authorization_request_endpoint"],
+            Address = oidcConfig.PushedAuthorizationRequestEndpoint,
             ClientId = _clientData.ClientId,
             ClientAssertion = oidcClient.Options.ClientAssertion,
             RedirectUri = oidcClient.Options.RedirectUri,
