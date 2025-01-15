@@ -27,25 +27,25 @@ public class AuthHttpClient : IDisposable
         return Deserialize<T>(json);
     }
 
-    public async Task<ResponseType> Post<RequestType, ResponseType>(string uri, RequestType body, string? accessToken = null, IDictionary<string, string>? headers = null)
+    public async Task<TResponseType> Post<TRequestType, TResponseType>(string uri, TRequestType body, string? accessToken = null, IDictionary<string, string>? headers = null)
     {
-        string jsonBody = body is string ? (body as string)! : JsonSerializer.Serialize(body, _jsonSerializerOptions);
+        string jsonBody = body is string str ? str : JsonSerializer.Serialize(body, JsonSerializerOptions);
         string jsonResponse = await Post(uri, jsonBody, accessToken, headers);
 
-        return Deserialize<ResponseType>(jsonResponse);
+        return Deserialize<TResponseType>(jsonResponse);
     }
 
-    public async Task<ResponseType> Put<RequestType, ResponseType>(string uri, RequestType body, string? accessToken = null, IDictionary<string, string>? headers = null)
+    public async Task<TResponseType> Put<TRequestType, TResponseType>(string uri, TRequestType body, string? accessToken = null, IDictionary<string, string>? headers = null)
     {
-        string jsonBody = JsonSerializer.Serialize(body, _jsonSerializerOptions);
+        string jsonBody = JsonSerializer.Serialize(body, JsonSerializerOptions);
         string jsonResponse = await Put(uri, jsonBody, accessToken, headers);
 
-        return Deserialize<ResponseType>(jsonResponse);
+        return Deserialize<TResponseType>(jsonResponse);
     }
 
-    public async Task Put<RequestType>(string uri, RequestType body, string? accessToken = null, IDictionary<string, string>? headers = null)
+    public async Task Put<TRequestType>(string uri, TRequestType body, string? accessToken = null, IDictionary<string, string>? headers = null)
     {
-        string jsonBody = JsonSerializer.Serialize(body, _jsonSerializerOptions);
+        string jsonBody = JsonSerializer.Serialize(body, JsonSerializerOptions);
         var _ = await Put(uri, jsonBody, accessToken, headers);
     }
 
@@ -120,7 +120,7 @@ public class AuthHttpClient : IDisposable
 
     private static T Deserialize<T>(string json)
     {
-        var deserialized = JsonSerializer.Deserialize<T>(json, options: _jsonSerializerOptions);
+        var deserialized = JsonSerializer.Deserialize<T>(json, options: JsonSerializerOptions);
 
         if (deserialized == null)
         {
@@ -137,15 +137,15 @@ public class AuthHttpClient : IDisposable
 
     static AuthHttpClient()
     {
-        _jsonSerializerOptions = new JsonSerializerOptions(JsonSerializerDefaults.Web)
+        JsonSerializerOptions = new JsonSerializerOptions(JsonSerializerDefaults.Web)
         {
             WriteIndented = false,
             DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingDefault,
             IgnoreReadOnlyProperties = true,
         };
 
-        _jsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+        JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
     }
 
-    private static JsonSerializerOptions _jsonSerializerOptions;
+    private static readonly JsonSerializerOptions JsonSerializerOptions;
 }

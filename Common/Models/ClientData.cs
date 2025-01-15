@@ -14,9 +14,11 @@ public class UserClientData : ClientData
     public required string RedirectPath { get; set; }
     public required Resource[] Resources { get; set; }
     public string? OrganizationNumber { get; set; }
+    public string[]? AssertionDetails { get; set; }
 }
 
 public class SystemClientData : ClientData
 {
     public required string[] Scopes { get; set; }
+    public string[]? AssertionDetails { get; set; }
 }
