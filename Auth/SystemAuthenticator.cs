@@ -77,7 +77,7 @@ public class SystemAuthenticator : IDisposable
         return new ProtocolRequest
         {
             Address = tokenEndpoint,
-            ClientAssertion = ClientAssertionBuilder.Build(_clientData.ClientId, _clientData.Jwk.PublicAndPrivateValue, _clientData.Authority, _clientData.AssertionDetails),
+            ClientAssertion = ClientAssertionBuilder.Build(_clientData.ClientId, _clientData.Jwk.PublicAndPrivateValue, _clientData.Authority),
             ClientId = _clientData.ClientId,
             ClientCredentialStyle = ClientCredentialStyle.PostBody,
             DPoPProofToken = _clientData.UseDPoP ? DPoPProofBuilder.CreateDPoPProof(tokenEndpoint, "POST", _clientData.Jwk, dPoPNonce: dPoPNonce) : null,

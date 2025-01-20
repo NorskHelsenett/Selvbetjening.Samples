@@ -109,7 +109,7 @@ public sealed class UserAuthenticator : IDisposable
             RedirectUri = redirectUri,
             Scope = scope,
             Resource = _clientData.Resources.Select(r => r.Name).ToArray(),
-            GetClientAssertionAsync = () => Task.FromResult(ClientAssertionBuilder.Build(_clientData.ClientId, _clientData.Jwk.PublicAndPrivateValue, _clientData.Authority, _clientData.AssertionDetails)),
+            GetClientAssertionAsync = () => Task.FromResult(ClientAssertionBuilder.Build(_clientData.ClientId, _clientData.Jwk.PublicAndPrivateValue, _clientData.Authority)),
             Browser = new SystemBrowserRunner(htmlTitle, htmlBody),
             LoadProfile = false,
             LoggerFactory = LoggerFactory.Create(builder => builder
