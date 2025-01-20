@@ -13,12 +13,10 @@ public class SystemAuthenticator : IDisposable
     private readonly HttpClient _httpClient;
     private readonly ConfigurationManager<OpenIdConnectConfiguration> _oidcConfigManager;
 
-    public SystemAuthenticator(SystemClientData clientData, bool logHttp = false)
+    public SystemAuthenticator(SystemClientData clientData)
     {
         _clientData = clientData;
-        _httpClient = logHttp
-            ? new HttpClient(new RawHttpLoggingHandler(new HttpClientHandler()))
-            : new HttpClient();
+        _httpClient = new HttpClient();
         _oidcConfigManager = new ConfigurationManager<OpenIdConnectConfiguration>(
             $"{_clientData.Authority}/.well-known/openid-configuration",
             new OpenIdConnectConfigurationRetriever()
@@ -59,28 +57,15 @@ public class SystemAuthenticator : IDisposable
 
     private ClientCredentialsTokenRequest CreateClientCredentialsTokenRequest(string tokenEndpoint, string? dPoPNonce = null)
     {
-        var request = CreateTokenRequestBase(tokenEndpoint, dPoPNonce);
         return new ClientCredentialsTokenRequest
-        {
-            Address = request.Address,
-            ClientAssertion = request.ClientAssertion,
-            ClientId = request.ClientId,
-            ClientCredentialStyle = request.ClientCredentialStyle,
-            DPoPProofToken = request.DPoPProofToken,
-            Scope = string.Join(" ", _clientData.Scopes),
-            GrantType = OidcConstants.GrantTypes.ClientCredentials,
-        };
-    }
-
-    private ProtocolRequest CreateTokenRequestBase(string tokenEndpoint, string? dPoPNonce = null)
-    {
-        return new ProtocolRequest
         {
             Address = tokenEndpoint,
             ClientAssertion = ClientAssertionBuilder.Build(_clientData.ClientId, _clientData.Jwk.PublicAndPrivateValue, _clientData.Authority),
             ClientId = _clientData.ClientId,
             ClientCredentialStyle = ClientCredentialStyle.PostBody,
             DPoPProofToken = _clientData.UseDPoP ? DPoPProofBuilder.CreateDPoPProof(tokenEndpoint, "POST", _clientData.Jwk, dPoPNonce: dPoPNonce) : null,
+            Scope = string.Join(" ", _clientData.Scopes),
+            GrantType = OidcConstants.GrantTypes.ClientCredentials,
         };
     }
 
