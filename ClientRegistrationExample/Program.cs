@@ -62,15 +62,17 @@ internal static class Program
             UseDPoP = config.HelseId.UseDPoP,
         };
 
-        var clientStatus = await GetClientStatus(authHttpClient, clientDataForSelvbetjeningScopes, config.Selvbetjening.ClientStatusUri);
+        var currentClient = await GetClientStatus(authHttpClient, clientDataForSelvbetjeningScopes, config.Selvbetjening.ClientStatusUri);
+        var accessOk = currentClient.ApiScopes.All(s => s.Status == ScopeAccessStatus.Ok) &&
+                       currentClient.AudienceSpecificClientClaims.All(c => c.Status == AudienceSpecificClaimStatus.Ok);
 
-        if (clientStatus != OverallClientStatus.Active)
+        if (!accessOk)
         {
-            await Out($"Client status is {clientStatus}. Aborting ...");
+            await Out($"Client status is not OK. Aborting ...");
             return;
         }
 
-        await Out("Client is active");
+        await Out("Client is ready");
 
         /*
          * Step 4: Get an access token for each resource (audience)
@@ -144,13 +146,13 @@ internal static class Program
         return confirmationStatus;
     }
 
-    private static async Task<OverallClientStatus> GetClientStatus(AuthHttpClient authHttpClient, SystemClientData clientData, string clientStatusUri)
+    private static async Task<CurrentClient> GetClientStatus(AuthHttpClient authHttpClient, SystemClientData clientData, string clientStatusUri)
     {
         var clientCredentialsTokens = await GetClientCredentialsTokens(clientData);
 
-        var clientStatusResponse = await authHttpClient.Get<ClientStatusResponse>(clientStatusUri, accessToken: clientCredentialsTokens.AccessToken);
+        var response = await authHttpClient.Get<CurrentClient>(clientStatusUri, accessToken: clientCredentialsTokens.AccessToken);
 
-        return clientStatusResponse.Status;
+        return response;
     }
 
     private static async Task<ClientSecretUpdateResponse> UpdateClientSecret(AuthHttpClient authHttpClient, SystemClientData clientData, string newPublicJwk, string clientSecretUri)
