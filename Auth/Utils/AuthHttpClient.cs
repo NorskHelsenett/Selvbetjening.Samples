@@ -50,7 +50,9 @@ public class AuthHttpClient : IDisposable
 
         if (_dPoPKey != null && accessToken != null)
         {
-            var dPopProof = DPoPProofBuilder.CreateDPoPProof(uri, method.ToString(), _dPoPKey, accessToken: accessToken);
+            string uriWithoutQueryString = uri.Contains("?") ? uri.Split("?")[0] : uri;
+
+            var dPopProof = DPoPProofBuilder.CreateDPoPProof(uriWithoutQueryString, method.ToString(), _dPoPKey, accessToken: accessToken);
             requestMessage.SetDPoPToken(accessToken, dPopProof);
         }
         else if (accessToken != null)
