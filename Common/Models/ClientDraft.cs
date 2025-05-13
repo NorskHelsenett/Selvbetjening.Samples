@@ -2,11 +2,12 @@
 
 public class ClientDraft
 {
-    public ClientDraft(string organizationNumber, string publicJwk, string[] apiScopes)
+    public ClientDraft(string organizationNumber, string publicJwk, string[] apiScopes, string postClientConfirmationRedirectUri)
     {
         OrganizationNumber = organizationNumber;
         PublicJwk = publicJwk;
         ApiScopes = apiScopes;
+        PostClientConfirmationRedirectUri = postClientConfirmationRedirectUri;
     }
 
     public string OrganizationNumber { get; set; }
@@ -17,4 +18,6 @@ public class ClientDraft
     public string[]? RedirectUris { get; set; }
     public string[]? PostLogoutRedirectUris { get; set; }
     public string[]? ChildOrganizationNumbers { get; set; }
+
+    public string PostClientConfirmationRedirectUri { get; set; }
 }
