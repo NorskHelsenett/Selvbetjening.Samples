@@ -22,20 +22,22 @@ internal static class Program
         var jwk = KeyGenerator.GenerateRsaJwk();
 
         using var authHttpClient = new AuthHttpClient(config.HelseId.UseDPoP ? jwk : null);
-        string redirectUri = $"http://localhost:{config.LocalHttpServer.RedirectPort}";
+        string redirectHost = $"http://localhost:{config.LocalHttpServer.RedirectPort}";
         string redirectPath = $"/{config.LocalHttpServer.RedirectPath}";
+        string redirectUri = $"{redirectHost}{redirectPath}";
+
 
         /*
          * Step 1: Create and submit the client draft
          */
 
-        string clientId = (await SubmitClientDraft(config, jwk.PublicValue, authHttpClient)).ClientId;
+        string clientId = (await SubmitClientDraft(config, jwk.PublicValue, redirectUri, authHttpClient)).ClientId;
 
         /*
          * Step 2: Let the user log in and confirm the client draft
          */
 
-        string confirmationStatus = await ConfirmClientDraft(config, clientId, redirectUri, redirectPath);
+        string confirmationStatus = await ConfirmClientDraft(config, clientId, redirectHost);
 
         if (confirmationStatus != "Success")
         {
@@ -82,7 +84,7 @@ internal static class Program
         {
             await Out("Logging in user...");
             // Authorization code with PKCE
-            await LoginUserAndPrintAccessTokens(config, jwk, clientId, redirectUri, redirectPath);
+            await LoginUserAndPrintAccessTokens(config, jwk, clientId, redirectHost, redirectPath);
         }
         else
         {
@@ -112,9 +114,9 @@ internal static class Program
         await Out("Done ...");
     }
 
-    private static async Task<ClientDraftResponse> SubmitClientDraft(Config config, string publicJwk, AuthHttpClient authHttpClient)
+    private static async Task<ClientDraftResponse> SubmitClientDraft(Config config, string publicJwk, string redirectUri, AuthHttpClient authHttpClient)
     {
-        var clientDraft = new ClientDraft(config.ClientDraft.OrganizationNumber, publicJwk, config.ClientDraft.ApiScopes)
+        var clientDraft = new ClientDraft(config.ClientDraft.OrganizationNumber, publicJwk, config.ClientDraft.ApiScopes, redirectUri)
         {
             AudienceSpecificClientClaims = config.ClientDraft.AudienceSpecificClientClaims,
             ChildOrganizationNumbers = config.ClientDraft.ChildOrganizationNumbers,
@@ -126,13 +128,13 @@ internal static class Program
             headers: new Dictionary<string, string> { [config.Selvbetjening.ClientDraftApiKeyHeader] = config.Selvbetjening.ClientDraftApiKey });
     }
 
-    private static async Task<string> ConfirmClientDraft(Config config, string clientId, string redirectUri, string redirectPath)
+    private static async Task<string> ConfirmClientDraft(Config config, string clientId, string redirectHost)
     {
-        string confirmationUri = config.Selvbetjening.ConfirmationUri.Replace("<client_id>", clientId).Replace("<port>", config.LocalHttpServer.RedirectPort.ToString()).Replace("<path>", redirectPath);
+        string confirmationUri = config.Selvbetjening.ConfirmationUri.Replace("<client_id>", clientId);
 
         await Out("Waiting or user to confirm client...");
 
-        var browserOptions = new BrowserOptions(confirmationUri, new Uri(new Uri(redirectUri), config.LocalHttpServer.RedirectPath).ToString());
+        var browserOptions = new BrowserOptions(confirmationUri, new Uri(new Uri(redirectHost), config.LocalHttpServer.RedirectPath).ToString());
 
         using var browserRunner = new SystemBrowserRunner(config.LocalHttpServer.HtmlTitle, config.LocalHttpServer.HtmlBody);
         var result = await browserRunner.InvokeAsync(browserOptions, default);
