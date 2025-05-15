@@ -20,7 +20,7 @@ You probably want to enable support for refresh tokens, and it's important to sp
 
 After the client system has been created, go to the 'Automatisering' tab, and generate an api key:
 
-<img width="812" alt="image" src="https://user-images.githubusercontent.com/69471911/234249639-d973749e-27b4-4b50-8a6b-2e4179f46e0e.png">
+<img width="1172" alt="screenshot from the automation tab" src="./Docs/images/automatisering-screenshot.png">
 
 Now, move into your clone of [appsettings.json](https://github.com/NorskHelsenett/Selvbetjening.Samples/blob/main/ClientRegistrationExample/appsettings.json), and paste the api key. This key is used for authenticating against the [client drafts endpoint](https://ext.selvbetjening.test.nhn.no).
 
