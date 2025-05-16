@@ -16,9 +16,9 @@ After creating a client system with an api key, which is described in the follow
 
 A client system must be created in **[Selvbetjening for HelseID ](https://selvbetjening.test.nhn.no/)**
 
-You probably want to enable support for refresh tokens, and it's important to specify which apis (services) are supported by the system. The redirect URI should be set to `http://localhost:1337/callback` when using the default config.
+For the sample, you need to enable support for refresh tokens, and it's important to specify which apis (services) are supported by the system. The redirect URI should be set to `http://localhost:1337/callback` when using the default config.
 
-After the client system has been created, go to the 'Automatisering' tab, and generate an api key:
+After the client system has been created, go to the 'Automation' tab, and generate an api key:
 
 <img width="1172" alt="screenshot from the automation tab" src="./Docs/images/automatisering-screenshot.png">
 
@@ -41,10 +41,7 @@ Now, move into your clone of [appsettings.json](https://github.com/NorskHelsenet
 Follow the sample code in [ClientRegistrationExample](https://github.com/NorskHelsenett/Selvbetjening.Samples/tree/main/ClientRegistrationExample)
 
 1. Create the client draft using the `client-drafts` endpoint
-2. Direct the end user to Selvbetjening for HelseID: `/confirm-client/<client_id>?redirectPort=<port>&redirectPath=<path>`, where:
-
-- `<client_id>` is the id of the client draft
-- `<port>` and `<path>` is the port and path to redirect the end user back to your local http server
+2. Direct the end user to Selvbetjening for HelseID: `/confirm-client/<client_id>`, where `<client_id>` is the id of the client draft
 
 3. Check the status of the client's access to the specified scopes
 4. Authenticate the end user and request access tokens for the specified apis
