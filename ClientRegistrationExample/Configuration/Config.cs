@@ -4,11 +4,11 @@ namespace ClientRegistrationExample.Configuration;
 
 internal class Config
 {
-    public required HelseIdConfig HelseId { get; set; }
-    public required SelvbetjeningConfig Selvbetjening { get; set; }
-    public required ClientDraftConfig ClientDraft { get; set; }
-    public required LocalHttpServerConfig LocalHttpServer { get; set; }
-    public required AppConfig App { get; set; }
+    public required HelseIdConfig HelseId { get; init; }
+    public required SelvbetjeningConfig Selvbetjening { get; init; }
+    public required ClientDraftConfig ClientDraft { get; init; }
+    public required LocalHttpServerConfig LocalHttpServer { get; init; }
+    public required AppConfig App { get; init; }
 }
 
 internal class HelseIdConfig

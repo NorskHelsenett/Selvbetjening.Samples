@@ -2,9 +2,9 @@
 
 internal class Config
 {
-    public required HelseIdConfig HelseId { get; set; }
-    public required SelvbetjeningConfig Selvbetjening { get; set; }
-    public required ClientConfig Client { get; set; }
+    public required HelseIdConfig HelseId { get; init; }
+    public required SelvbetjeningConfig Selvbetjening { get; init; }
+    public required ClientConfig Client { get; init; }
 }
 
 internal class HelseIdConfig

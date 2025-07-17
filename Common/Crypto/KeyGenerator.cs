@@ -7,12 +7,6 @@ namespace Common.Crypto;
 
 public static class KeyGenerator
 {
-    public static KeyPair GenerateRsa(KeySize keySize = KeySize.Bits2048)
-    {
-        using var rsa = RSA.Create(ToInt(keySize));
-        return new KeyPair(rsa.ExportRSAPrivateKeyPem(), rsa.ExportRSAPublicKeyPem());
-    }
-
     public static JwkWithMetadata GenerateRsaJwk(KeySize keySize = KeySize.Bits2048)
     {
         using var rsa = RSA.Create(ToInt(keySize));
@@ -40,8 +34,8 @@ public static class KeyGenerator
             Alg = jwk.Alg,
             Crv = jwk.Crv,
             D = jwk.D,
-            DP = jwk.DP,
-            DQ = jwk.DQ,
+            Dp = jwk.DP,
+            Dq = jwk.DQ,
             E = jwk.E,
             K = jwk.K,
             KeyOps = jwk.KeyOps?.Count > 0 ? jwk.KeyOps : null,
@@ -51,14 +45,14 @@ public static class KeyGenerator
             Oth = jwk.Oth,
             P = jwk.P,
             Q = jwk.Q,
-            QI = jwk.QI,
+            Qi = jwk.QI,
             Use = jwk.Use,
             X = jwk.X,
             Y = jwk.Y,
-            X5c = jwk.X5c?.Count > 0 ? jwk.X5c : null,
-            X5t = jwk.X5t,
-            X5u = jwk.X5u,
-            X5tS256 = jwk.X5tS256
+            X5C = jwk.X5c?.Count > 0 ? jwk.X5c : null,
+            X5T = jwk.X5t,
+            X5U = jwk.X5u,
+            X5Ts256 = jwk.X5tS256
         };
 
         return jwkfs.ToJson(indented);

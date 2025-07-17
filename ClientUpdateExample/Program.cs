@@ -1,12 +1,11 @@
 ﻿using Auth;
 using Auth.Utils;
 using ClientUpdateExample.Configuration;
-using Common.Crypto;
 using Common.Models;
 using Common.Models.Response;
 using Microsoft.Extensions.Configuration;
-using System.Text.Json;
-using System.Text.Json.Serialization;
+
+namespace ClientUpdateExample;
 
 internal static class Program
 {
@@ -20,7 +19,7 @@ internal static class Program
 
         var update = new ClientUpdate
         {
-            ApiScopes = new[] { SelvbetjeningClientScope, "magnusbv:api/api" },
+            ApiScopes = [SelvbetjeningClientScope, "magnusbv:api/api"],
             AudienceSpecificClientClaims = null,
             ChildOrganizationNumbers = null,
             PostLogoutRedirectUris = null,
@@ -44,7 +43,7 @@ internal static class Program
 
     private static async Task UpdateClient(AuthHttpClient authHttpClient, Config config, ClientUpdate update)
     {
-        string accessToken = await GetAccessToken(config);
+        var accessToken = await GetAccessToken(config);
 
         await authHttpClient.Put(config.Selvbetjening.ClientUri, update, accessToken: accessToken);
     }
@@ -58,7 +57,7 @@ internal static class Program
 
     private static async Task<ClientSecretUpdateResponse> UpdateClientSecret(AuthHttpClient authHttpClient, Config config, string newPublicJwk)
     {
-        string accessToken = await GetAccessToken(config);
+        var accessToken = await GetAccessToken(config);
 
         return await authHttpClient.Post<string, ClientSecretUpdateResponse>(config.Selvbetjening.ClientSecretUri, newPublicJwk, accessToken: accessToken);
     }
@@ -70,7 +69,7 @@ internal static class Program
             Authority = config.HelseId.Authority,
             ClientId = config.Client.ClientId,
             Jwk = new JwkWithMetadata(config.Client.Jwk),
-            Scopes = new[] { SelvbetjeningClientScope },
+            Scopes = [SelvbetjeningClientScope],
             UseDPoP = config.HelseId.UseDPoP,
         };
 
@@ -94,9 +93,9 @@ internal static class Program
     private static Config GetConfig()
     {
         var builder = new ConfigurationBuilder()
-                              .SetBasePath(Directory.GetCurrentDirectory())
-                              .AddJsonFile("appsettings.json", optional: false)
-                              .AddJsonFile("appsettings.Local.json", optional: true);
+            .SetBasePath(Directory.GetCurrentDirectory())
+            .AddJsonFile("appsettings.json", optional: false)
+            .AddJsonFile("appsettings.Local.json", optional: true);
 
         IConfiguration configuration = builder.Build();
 
@@ -114,18 +113,4 @@ internal static class Program
 
         return config;
     }
-
-    static Program()
-    {
-        _jsonSerializerOptions = new JsonSerializerOptions(JsonSerializerDefaults.Web)
-        {
-            WriteIndented = false,
-            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingDefault,
-            IgnoreReadOnlyProperties = true,
-        };
-
-        _jsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
-    }
-
-    private static readonly JsonSerializerOptions _jsonSerializerOptions;
 }

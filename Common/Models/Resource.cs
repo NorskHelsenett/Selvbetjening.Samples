@@ -1,13 +1,7 @@
 ﻿namespace Common.Models;
 
-public class Resource
+public class Resource(string name, string[] scopes)
 {
-    public Resource(string name, string[] scopes)
-    {
-        Name = name;
-        Scopes = scopes;
-    }
-
-    public string Name { get; set; }
-    public string[] Scopes { get; set; }
+    public string Name { get; } = name;
+    public string[] Scopes { get; } = scopes;
 }

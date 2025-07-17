@@ -6,8 +6,6 @@ using Common.Models;
 using Common.Models.Response;
 using IdentityModel.OidcClient.Browser;
 using Microsoft.Extensions.Configuration;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 
 namespace ClientRegistrationExample;
 
@@ -31,13 +29,13 @@ internal static class Program
          * Step 1: Create and submit the client draft
          */
 
-        string clientId = (await SubmitClientDraft(config, jwk.PublicValue, redirectUri, authHttpClient)).ClientId;
+        var clientId = (await SubmitClientDraft(config, jwk.PublicValue, redirectUri, authHttpClient)).ClientId;
 
         /*
          * Step 2: Let the user log in and confirm the client draft
          */
 
-        string confirmationStatus = await ConfirmClientDraft(config, clientId, redirectHost);
+        var confirmationStatus = await ConfirmClientDraft(config, clientId, redirectHost);
 
         if (confirmationStatus != "Success")
         {
@@ -130,7 +128,7 @@ internal static class Program
 
     private static async Task<string> ConfirmClientDraft(Config config, string clientId, string redirectHost)
     {
-        string confirmationUri = config.Selvbetjening.ConfirmationUri.Replace("<client_id>", clientId);
+        var confirmationUri = config.Selvbetjening.ConfirmationUri.Replace("<client_id>", clientId);
 
         await Out("Waiting or user to confirm client...");
 
@@ -198,7 +196,7 @@ internal static class Program
             await PrintAccessToken(resourceToken.Resource, resourceToken.AccessToken);
         }
 
-        string lastRefreshToken = initialResourceTokens.RefreshToken;
+        var lastRefreshToken = initialResourceTokens.RefreshToken;
 
         foreach (string resource in clientData.Resources.Where(cr => cr.Name != SelvbetjeningResource).Select(cr => cr.Name))
         {
@@ -240,10 +238,10 @@ internal static class Program
     {
         var dict = new Dictionary<string, List<string>>();
 
-        foreach (string scope in apiScopes)
+        foreach (var scope in apiScopes)
         {
-            string[] parts = scope.Split('/', StringSplitOptions.RemoveEmptyEntries);
-            string resourceName = parts[0];
+            var parts = scope.Split('/', StringSplitOptions.RemoveEmptyEntries);
+            var resourceName = parts[0];
 
             if (!dict.TryGetValue(resourceName, out var scopeList))
             {
@@ -325,18 +323,4 @@ internal static class Program
     {
         await Console.Out.WriteLineAsync(message);
     }
-
-    static Program()
-    {
-        _jsonSerializerOptions = new JsonSerializerOptions(JsonSerializerDefaults.Web)
-        {
-            WriteIndented = false,
-            DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingDefault,
-            IgnoreReadOnlyProperties = true,
-        };
-
-        _jsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
-    }
-
-    private static readonly JsonSerializerOptions _jsonSerializerOptions;
 }

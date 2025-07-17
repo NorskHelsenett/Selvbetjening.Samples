@@ -1,13 +1,7 @@
 ﻿namespace Common.Models;
 
-public class ResourceToken
+public class ResourceToken(string resource, string accessToken)
 {
-    public ResourceToken(string resource, string accessToken)
-    {
-        Resource = resource;
-        AccessToken = accessToken;
-    }
-
-    public string Resource { get; set; }
-    public string AccessToken { get; set; }
+    public string Resource { get; } = resource;
+    public string AccessToken { get; } = accessToken;
 }

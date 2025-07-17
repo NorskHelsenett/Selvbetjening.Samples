@@ -21,11 +21,11 @@ internal class JwkForSerialization
 
     /// <summary>'dp' (RSA - First Factor CRT Exponent)</summary>
     [JsonPropertyName("dp")]
-    public string? DP { get; internal set; }
+    public string? Dp { get; internal set; }
 
     /// <summary>'dq' (RSA - Second Factor CRT Exponent)</summary>
     [JsonPropertyName("dq")]
-    public string? DQ { get; internal set; }
+    public string? Dq { get; internal set; }
 
     /// <summary>'e' (RSA - Exponent)</summary>
     [JsonPropertyName("e")]
@@ -65,7 +65,7 @@ internal class JwkForSerialization
 
     /// <summary>'qi' (RSA - First CRT Coefficient)</summary>
     [JsonPropertyName("qi")]
-    public string? QI { get; internal set; }
+    public string? Qi { get; internal set; }
 
     /// <summary>'use' (Public Key Use)</summary>
     [JsonPropertyName("use")]
@@ -77,19 +77,19 @@ internal class JwkForSerialization
 
     /// <summary>'x5c' collection (X.509 Certificate Chain)</summary>
     [JsonPropertyName("x5c")]
-    public IList<string>? X5c { get; internal set; }
+    public IList<string>? X5C { get; internal set; }
 
     /// <summary>'x5t' (X.509 Certificate SHA-1 thumbprint)</summary>
     [JsonPropertyName("x5t")]
-    public string? X5t { get; internal set; }
+    public string? X5T { get; internal set; }
 
     /// <summary>'x5t#S256' (X.509 Certificate SHA-256 thumbprint)</summary>
     [JsonPropertyName("x5t#S256")]
-    public string? X5tS256 { get; internal set; }
+    public string? X5Ts256 { get; internal set; }
 
     /// <summary>'x5u' (X.509 URL)</summary>
     [JsonPropertyName("x5u")]
-    public string? X5u { get; internal set; }
+    public string? X5U { get; internal set; }
 
     /// <summary>'y' (ECC - Y Coordinate)</summary>
     [JsonPropertyName("y")]

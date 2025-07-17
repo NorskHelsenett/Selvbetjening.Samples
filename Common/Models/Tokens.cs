@@ -1,13 +1,7 @@
 ﻿namespace Common.Models;
 
-public class Tokens
+public class Tokens(string accessToken, string refreshToken)
 {
-    public Tokens(string accessToken, string refreshToken)
-    {
-        AccessToken = accessToken;
-        RefreshToken = refreshToken;
-    }
-
-    public string AccessToken { get; set; }
-    public string RefreshToken { get; set; }
+    public string AccessToken { get; } = accessToken;
+    public string RefreshToken { get; } = refreshToken;
 }
