@@ -2,7 +2,7 @@
 
 This tutorial is for creating HelseID clients through [Selvbetjening for HelseID's api](https://api.selvbetjening.test.nhn.no/).
 
-More details can be found at [Utviklerportalen](https://utviklerportal.nhn.no/informasjonstjenester/helseid/tilgang-til-helseid/selvbetjening/docs/client-api/client-api-overviewmd/).
+Full API docs can be found in [Selvbetjening for HelseID](https://selvbetjening.test.nhn.no/docs/api).
 
 After creating a client system with an api key, which is described in the following section, the flow is like this:
 
