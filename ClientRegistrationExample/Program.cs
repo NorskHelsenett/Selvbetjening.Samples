@@ -4,7 +4,7 @@ using ClientRegistrationExample.Configuration;
 using Common.Crypto;
 using Common.Models;
 using Common.Models.Response;
-using IdentityModel.OidcClient.Browser;
+using Duende.IdentityModel.OidcClient.Browser;
 using Microsoft.Extensions.Configuration;
 
 namespace ClientRegistrationExample;

@@ -1,5 +1,5 @@
 ﻿using Common.Models;
-using IdentityModel.Client;
+using Duende.IdentityModel.Client;
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;

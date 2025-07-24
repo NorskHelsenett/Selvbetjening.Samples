@@ -1,5 +1,5 @@
 ﻿using Common.Models;
-using IdentityModel;
+using Duende.IdentityModel;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Cryptography;

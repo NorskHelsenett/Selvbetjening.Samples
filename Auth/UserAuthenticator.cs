@@ -1,8 +1,8 @@
 ﻿using Auth.Utils;
 using Common.Models;
-using IdentityModel.Client;
-using IdentityModel.OidcClient;
-using IdentityModel.OidcClient.DPoP;
+using Duende.IdentityModel.Client;
+using Duende.IdentityModel.OidcClient;
+using Duende.IdentityModel.OidcClient.DPoP;
 using Microsoft.Extensions.Logging;
 
 namespace Auth;
