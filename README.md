@@ -7,52 +7,9 @@ This repository contains two sample implementations for using the [Selvbetjening
 Full API docs can be found in [Selvbetjening for HelseID](https://selvbetjening.test.nhn.no/docs/api).
 
 # Create HelseID clients
-***Note: The API does not support creating multi-tenant or single-tenant clients.***
-```mermaid
-    sequenceDiagram
-    title Sequence diagram for creating HelseID clients
-    accTitle: Diagram that shows how you can automate client creation with the API
+A client template must be created in [Selvbetjening for HelseID ](https://selvbetjening.test.nhn.no/).
 
-    actor EndUser as End User
-    participant ClientTemplate as Client template
-    participant API as api.selvbetjening.nhn.no
-    participant Portal as selvbetjening.nhn.no
-    participant HelseId as helseid-sts.nhn.no
-
-    ClientTemplate ->> API: client draft (using api key) [1]
-    activate API
-    API -->> ClientTemplate: client id
-    deactivate API
-    ClientTemplate ->> Portal: Open URL in browser [2]
-    activate Portal
-    Portal ->> EndUser: Request confirmation
-    EndUser ->> Portal: Confirmation [3]
-    Portal ->> ClientTemplate: Redirect with status [4]
-    deactivate Portal
-    ClientTemplate ->> HelseId: Request access token for Selvbetjening API (using client id and key) [5]
-    activate HelseId
-    HelseId -->> ClientTemplate: access token
-    deactivate HelseId
-    ClientTemplate ->> API: Get status (using access token) [6]
-    activate API
-    API -->> ClientTemplate: Status
-    deactivate API
-
-```
-
-1. Create a client draft using the API
-2. Direct the end user to the confirmation page at [Selvbetjening for HelseID](https://selvbetjening.test.nhn.no) in a browser
-3. The end user confirms the client
-4. The browser redirects to your local http server
-5. With a successful status, you can request access tokens from HelseID
-6. Check the status of the client's access to the specified scopes
-
-## Client template
-
-A client template must be created in **[Selvbetjening for HelseID ](https://selvbetjening.test.nhn.no/)**
-
-For this sample implementation you need to enable user login and enable support for refresh tokens. It's also important to specify which APIs are supported by the system. 
-The redirect URI should be set to `http://localhost:1337/callback` when using the default config.
+For this sample implementation you need to enable user login and enable support for refresh tokens. The redirect URI should be set to `http://localhost:1337/callback` when using the default config.
 
 After the client system has been created, navigate to the 'Automation' tab, and generate an API key:
 
