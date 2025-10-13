@@ -31,7 +31,7 @@ Move into [appsettings.json](https://github.com/NorskHelsenett/Selvbetjening.Sam
 
 ## Creating the client draft
 
-Follow the sample code in [ClientRegistrationExample](https://github.com/NorskHelsenett/Selvbetjening.Samples/tree/main/ClientRegistrationExample)
+Follow the sample code in [ClientRegistrationExample](https://github.com/NorskHelsenett/Selvbetjening.Samples/tree/main/ClientRegistrationExample).
 
 1. Create the client draft using the `client-drafts` endpoint
 2. Direct the end user to Selvbetjening for HelseID: `/confirm-client/<client_id>`, where `<client_id>` is the ID of the client draft
@@ -41,7 +41,7 @@ Follow the sample code in [ClientRegistrationExample](https://github.com/NorskHe
 
 # Updating HelseID clients
 
-Follow the sample code in [ClientUpdateExample](https://github.com/NorskHelsenett/Selvbetjening.Samples/tree/main/ClientUpdateExample)
+Follow the sample code in [ClientUpdateExample](https://github.com/NorskHelsenett/Selvbetjening.Samples/tree/main/ClientUpdateExample).
 
 There are two separate endpoints for updating the client:
 
