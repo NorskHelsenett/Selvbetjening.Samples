@@ -3,7 +3,7 @@
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
   </PropertyGroup>
   <ItemGroup>
-    <PackageVersion Include="Duende.IdentityModel" Version="7.1.0" />
+    <PackageVersion Include="Duende.IdentityModel" Version="8.0.0" />
     <PackageVersion Include="Duende.IdentityModel.OidcClient" Version="6.0.1" />
     <PackageVersion Include="Duende.IdentityModel.OidcClient.Extensions" Version="6.0.1" />
     <PackageVersion Include="Microsoft.Extensions.Configuration.Binder" Version="9.0.10" />
