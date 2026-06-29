@@ -1,5 +1,7 @@
 # For systemleverandører med tykklienter
 
+Se også for mer oppdatert informasjon: [Onboardingsguide for leverandører](https://selvbetjening.test.nhn.no/docs#onboarding-guide)
+
 En tykklient er en applikasjon med programvare som kjører lokalt på sluttbrukerens datamaskin. En slik applikasjon forutsetter en individuell konfigurasjon for å kunne fungere som en HelseID-klient.
 
 For enkelte brukere kan det være krevende å sette opp en klientkonfigurasjon i Selvbetjening for HelseID.
@@ -14,7 +16,7 @@ Derfor vil Selvbetjening for HelseID her presentere 3 alternativer for å reduse
 
 [Helautomatisering](#alternativ-1-anbefalt-helautomatisering-via-api) (anbefalt) og [manuell bistand](#alternativ-3-helmanuell-bistand-fra-systemleverandør) er ytterpunktene, med [delvis automatisering ved hjelp av pakkekonfigurasjon](#alternativ-2-delvis-automatisering-ved-hjelp-av-pakkekonfigurasjon) som en mellomting.
 
-*For enkelhets skyld omtales en kunde som en fastlege, og et system/fagapplikasjon som EPJ. Dette er eksempler.*
+_For enkelhets skyld omtales en kunde som en fastlege, og et system/fagapplikasjon som EPJ. Dette er eksempler._
 
 ## Alternativ 1 (anbefalt): Helautomatisering via API
 
@@ -38,18 +40,6 @@ sequenceDiagram
     Fastlege->>Selvbetjening: Bekrefter konfigurasjon
     Fastlege->>HelseID: Logger på og får tokens
 ```
-
-## Alternativ 2: Delvis automatisering ved hjelp av pakkekonfigurasjon
-
-Dette alternativet medfører ingen kodeendring hos systemleverandøren.
-
-Systemleverandøren konfigurerer én eller flere "pakker" av api scopes i Selvbetjening. Hver av disse pakkene vil ha en id, som kan refereres i en lenke systemleverandøren sender til fastlegen. Du kan sette opp pakker under fanen "pakker" på klientsystemet i Selvbetjening.
-
-Ved bruk av denne lenken vil EPJ, tjenester og scopes være konfigurert på forhånd i Selvbetjening for HelseID.
-
-Fastlegen må manuelt håndtere nøkkelpar i selvbetjeningsløsningen. Dette gjøres ved å laste ned en kryptert konfigurasjonsfil som inneholder nøkkelpar.
-
-Systemleverandøren må lage en steg-for-steg-veiledning som forklarer hvordan fastlegen kan angi klient-id og nøkkelpar i sin EPJ-installasjon.
 
 ### Utløp av nøkkelparets gyldighet
 
@@ -75,7 +65,7 @@ sequenceDiagram
     Fastlege->>HelseID: Logger på og får tokens
 ```
 
-## Alternativ 3: Helmanuell bistand fra systemleverandør
+## Alternativ 2: Helmanuell bistand fra systemleverandør
 
 Systemleverandøren setter opp en klientkonfigurasjon på vegne av fastlegens virksomhet, og konfigurerer EPJ-installasjonen som nødvendig.
 
@@ -90,7 +80,7 @@ sequenceDiagram
     participant EPJ
     participant Selvbetjening
     participant HelseID
-    Fastlege->>Systemleverandør: Delegerer rettighet (Altinn) til å representere sin virksomhet i Selvbetjening 
+    Fastlege->>Systemleverandør: Delegerer rettighet (Altinn) til å representere sin virksomhet i Selvbetjening
     Systemleverandør->>Selvbetjening: Lager konfigurasjon på vegne av fastlege
     Systemleverandør->>EPJ: Installerer konfigurasjon
     Fastlege->>EPJ: Åpner EPJ
