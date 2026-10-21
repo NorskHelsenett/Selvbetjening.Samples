@@ -75,7 +75,7 @@ internal static class Program
 
         var results = await EndSession(config, authHttpClient, session.SessionId);
 
-        await PrintResults(results);
+        await PrintResults(results.Result!);
     }
 
     private static async Task PrintResults(ConformanceSessionResult results)
@@ -122,23 +122,23 @@ internal static class Program
         return $" (grant_type={tokenRequest.GrantType}{resource}, DPoP nonce: {(tokenRequest.DpopNonceIncluded ? "yes" : "no")})";
     }
 
-    private static async Task<ConformanceSessionResult> EndSession(
+    private static async Task<ConformanceTestSession> EndSession(
         Config config,
         AuthHttpClient authHttpClient,
         string sessionId
     )
     {
-        return await authHttpClient.Post<object, ConformanceSessionResult>(
+        return await authHttpClient.Post<object, ConformanceTestSession>(
             config.Selvbetjening.EndSessionUri(sessionId),
             new { },
             headers: ApiKeyHeader(config));
     }
 
-    private static async Task<ConformanceSessionStartResponse> StartSession(Config config, AuthHttpClient authHttpClient)
+    private static async Task<ConformanceTestSession> StartSession(Config config, AuthHttpClient authHttpClient)
     {
         var request = new ConformanceSessionStartRequest(config.Client.ClientId, MachineToMachineFlow);
 
-        return await authHttpClient.Post<ConformanceSessionStartRequest, ConformanceSessionStartResponse>(
+        return await authHttpClient.Post<ConformanceSessionStartRequest, ConformanceTestSession>(
             config.Selvbetjening.ConformanceSessionUri,
             request,
             headers: ApiKeyHeader(config));
