@@ -1,8 +1,9 @@
 # Getting started
 
-This repository contains two sample implementations for using the [Selvbetjening for HelseID API](https://api.selvbetjening.test.nhn.no/):
+This repository contains three sample implementations for using the [Selvbetjening for HelseID API](https://api.selvbetjening.test.nhn.no/):
 1. Create HelseID clients
 2. Updating HelseID clients
+3. Running a conformance test
 
 Full API docs can be found in [Selvbetjening for HelseID](https://selvbetjening.test.nhn.no/docs/api).
 
@@ -55,3 +56,51 @@ The update operation will affect all properties in the payload as submitted. If 
 If you want to add a redirect uri, you also need to submit the previous redirect uris, along with the rest of the relevant data for the client configuration.  
 If you want to delete a redirect uri, remove it from the array and call the update endpoint with the rest of the data.  
 If you set redirect uris to be null, the update will fail if the client system isn't configured to use the same redirect uris for all client configurations.
+
+# Running a conformance test
+
+A conformance test checks that your software authenticates the way the HelseID security profile
+requires. The session hands out an authority URI of its own; your client authenticates against that
+instead of HelseID, and the service examines what it saw. Nothing is simulated — the token request
+your software makes is the thing being tested.
+
+[ConformanceTestExample](https://github.com/NorskHelsenett/Selvbetjening.Samples/tree/main/ConformanceTestExample)
+covers a machine-to-machine client.
+
+## Before you start
+
+You need three things, and they have to belong together:
+
+1. A **client system** in Selvbetjening for HelseID.
+2. An **API key for conformance testing**, generated from the `Samsvarstesting` tab of that client
+   system. This is a different key from the one on the `Automation` tab.
+3. An existing **HelseID client created from that same client system**, and its private key.
+   Starting a session for a client belonging to a different client system is rejected.
+
+Put the values in `appsettings.Local.json` next to `appsettings.json`, which is gitignored:
+
+```
+{
+  "Selvbetjening": {
+    "ConformanceTestApiKey": "[PASTE here]"
+  },
+  "Client": {
+    "ClientId": "[PASTE here]",
+    "Jwk": "[PASTE the private JWK here]",
+    "Scopes": [ "nhn:selvbetjening/client" ]
+  }
+}
+```
+
+## What the sample does
+
+1. Starts a session with `POST /v1/conformance-test-sessions`, authenticating with the `api-key`
+   header, and receives a session id and the authority URI to use
+2. Requests an access token with the client credentials grant against that authority — this is the
+   step being examined. Tokens issued by a session cannot be used against APIs
+3. Ends the session with `POST /v1/conformance-test-sessions/{sessionId}/end`, which returns the
+   verdict and the checks behind it
+4. Prints each request the test observed, with the outcome of every check
+
+A warning prevents a test from passing, not only a failure. The same results are shown on the
+client system's `Samsvarstesting` tab in Selvbetjening for HelseID.
