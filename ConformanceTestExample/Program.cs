@@ -16,6 +16,10 @@ namespace ConformanceTestExample;
 /// </summary>
 internal static class Program
 {
+    // Examples for endpoints that are not strictly required. Enable if you wish to.
+    private const bool EnableResetExample = false;
+    private const bool EnableGetExample = false;
+
     private static async Task Main()
     {
         var config = GetConfig();
@@ -41,6 +45,7 @@ internal static class Program
 
         var clientData = new SystemClientData
         {
+            // Note that we assign the Authority URI from the session here
             Authority = session.AuthorityUri,
             ClientId = config.Client.ClientId,
             Jwk = jwk,
@@ -74,10 +79,18 @@ internal static class Program
         await Out("-- ENDED SESSION --");
         await PrintSession(session);
 
-        // await RunOptionalSteps(session, clientData, config, authHttpClient);
+        if (EnableResetExample)
+        {
+            await RunResetExample(session, clientData, config, authHttpClient);
+        }
+
+        if (EnableGetExample)
+        {
+            await RunGetExample(session, config, authHttpClient);
+        }
     }
 
-    private static async Task RunOptionalSteps(
+    private static async Task RunResetExample(
         ConformanceTestSession session,
         SystemClientData clientData,
         Config config,
@@ -104,7 +117,14 @@ internal static class Program
         await Out("");
         await Out("-- ENDED RESET SESSION --");
         await PrintSession(session);
+    }
 
+    private static async Task RunGetExample(
+        ConformanceTestSession session,
+        Config config,
+        AuthHttpClient authHttpClient
+    )
+    {
         /*
          * Optionally get the session details at a later time
          *
