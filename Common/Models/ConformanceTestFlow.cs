@@ -1,6 +1,6 @@
-﻿namespace Common.Models;
+namespace Common.Models;
 
-public enum SamsvarstestingFlow
+public enum ConformanceTestFlow
 {
     /// <summary>
     /// Only machine-to-machine API calls, no user login (i.e. client_credentials grant).

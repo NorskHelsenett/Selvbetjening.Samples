@@ -16,13 +16,10 @@ namespace ConformanceTestExample;
 /// </summary>
 internal static class Program
 {
-    // Serialized as the API expects it: External registers JsonStringEnumConverter with the
-    // camel case naming policy.
-    private const string MachineToMachineFlow = "machineToMachine";
-
     private static async Task Main()
     {
         var config = GetConfig();
+        var jwk = new JwkWithMetadata(config.Client.Jwk);
 
         using var authHttpClient = new AuthHttpClient();
 
@@ -32,7 +29,8 @@ internal static class Program
 
         var session = await StartSession(config, authHttpClient);
 
-        await Out($"Started conformance test session {session.SessionId}");
+        await Out("-- STARTED SESSION --");
+        await PrintSession(session);
 
         /*
          * Step 2: Point the client at the session's authority
@@ -41,7 +39,14 @@ internal static class Program
          * software it is the 'authority' setting of whichever OIDC library you use.
          */
 
-        await Out($"Session authority: {session.AuthorityUri}");
+        var clientData = new SystemClientData
+        {
+            Authority = session.AuthorityUri,
+            ClientId = config.Client.ClientId,
+            Jwk = jwk,
+            Scopes = config.Client.Scopes,
+            UseDPoP = config.HelseId.UseDPoP,
+        };
 
         /*
          * Step 3: Run the client as usual
@@ -49,22 +54,12 @@ internal static class Program
          * For a machine-to-machine client, "as usual" is requesting an access token with the
          * client credentials grant. Note that tokens issued by a conformance test session cannot
          * be used against APIs - they exist so the session has something to examine.
+         *
+         * The session accepts requests that HelseID would reject, so getting a token here does not
+         * mean the request was correct - the checks in step 4 are what tell you that.
          */
 
-        var clientData = new SystemClientData
-        {
-            Authority = session.AuthorityUri,
-            ClientId = config.Client.ClientId,
-            Jwk = new JwkWithMetadata(config.Client.Jwk),
-            Scopes = config.Client.Scopes,
-            UseDPoP = config.HelseId.UseDPoP,
-        };
-
-        using var authenticator = new SystemAuthenticator(clientData);
-
-        var tokens = await authenticator.GetTokens();
-
-        await Out($"Received an access token of {tokens.AccessToken.Length} characters from the session");
+        await RunClient(clientData);
 
         /*
          * Step 4: End the session and read the results
@@ -73,9 +68,74 @@ internal static class Program
          * Selvbetjening for HelseID, on the client system's 'Samsvarstesting' tab.
          */
 
-        var results = await EndSession(config, authHttpClient, session.SessionId);
+        session = await EndSession(config, authHttpClient, session.SessionId);
 
-        await PrintResults(results.Result!);
+        await Out("");
+        await Out("-- ENDED SESSION --");
+        await PrintSession(session);
+
+        // await RunOptionalSteps(session, clientData, config, authHttpClient);
+    }
+
+    private static async Task RunOptionalSteps(
+        ConformanceTestSession session,
+        SystemClientData clientData,
+        Config config,
+        AuthHttpClient authHttpClient
+    )
+    {
+        /*
+         * Optionally reset the session to run the checks again with the same session authority URI
+         *
+         * The SessionId and AuthorityUri will be unchanged, so we can reuse the existing configuration
+         */
+
+        session = await ResetSession(config, authHttpClient, session.SessionId);
+
+        await Out("");
+        await Out("-- RESET SESSION --");
+        await PrintSession(session);
+
+        // Note that the configured Authority has not changed after the reset
+        await RunClient(clientData);
+
+        session = await EndSession(config, authHttpClient, session.SessionId);
+
+        await Out("");
+        await Out("-- ENDED RESET SESSION --");
+        await PrintSession(session);
+
+        /*
+         * Optionally get the session details at a later time
+         *
+         * Note that sessions will not be stored forever
+         */
+
+        session = await GetSession(config, authHttpClient, session.SessionId);
+
+        await Out("");
+        await Out("-- FETCHED SESSION --");
+        await PrintSession(session);
+    }
+
+    private static async Task PrintSession(ConformanceTestSession session)
+    {
+        await Out($"Session ID:\t {session.SessionId}");
+        await Out($"Authority URI:\t {session.AuthorityUri}");
+        await Out($"Client ID:\t {session.ClientId}");
+        await Out($"Flow:\t\t {session.Flow}");
+        await Out($"Status:\t\t {session.Status}");
+        await Out($"Started:\t {session.StartedAt}");
+
+        if (session.EndedAt != null)
+        {
+            await Out($"Ended:\t\t {session.EndedAt}");
+        }
+
+        if (session.Result != null)
+        {
+            await PrintResults(session.Result);
+        }
     }
 
     private static async Task PrintResults(ConformanceSessionResult results)
@@ -90,8 +150,6 @@ internal static class Program
 
             foreach (var check in request.Checks)
             {
-                // Outcome is printed as the API reported it, so a value this sample predates still
-                // tells the reader something.
                 await Out($"  [{check.Outcome}] {check.Code}: {check.Title.En}");
 
                 foreach (var error in check.Errors)
@@ -119,7 +177,27 @@ internal static class Program
             ? ""
             : $", resource={tokenRequest.ResourceIndicator}";
 
-        return $" (grant_type={tokenRequest.GrantType}{resource}, DPoP nonce: {(tokenRequest.DpopNonceIncluded ? "yes" : "no")})";
+        return
+            $" (grant_type={tokenRequest.GrantType}{resource}, DPoP nonce: {(tokenRequest.DpopNonceIncluded ? "yes" : "no")})";
+    }
+
+    private static async Task RunClient(SystemClientData clientData)
+    {
+        using var authenticator = new SystemAuthenticator(clientData);
+
+        await Out("");
+
+        // The session can still fail a request in some cases. Catch it, so that the session is ended
+        // and the checks show what went wrong.
+        try
+        {
+            var tokens = await authenticator.GetTokens();
+            await Out($"Received an access token of {tokens.AccessToken.Length} characters from the session");
+        }
+        catch (Exception e)
+        {
+            await Out($"The client failed: {e.Message}");
+        }
     }
 
     private static async Task<ConformanceTestSession> EndSession(
@@ -128,19 +206,40 @@ internal static class Program
         string sessionId
     )
     {
-        return await authHttpClient.Post<object, ConformanceTestSession>(
+        return await authHttpClient.Post<ConformanceTestSession>(
             config.Selvbetjening.EndSessionUri(sessionId),
-            new { },
             headers: ApiKeyHeader(config));
     }
 
     private static async Task<ConformanceTestSession> StartSession(Config config, AuthHttpClient authHttpClient)
     {
-        var request = new ConformanceSessionStartRequest(config.Client.ClientId, MachineToMachineFlow);
+        var request = new ConformanceSessionStartRequest(config.Client.ClientId);
 
         return await authHttpClient.Post<ConformanceSessionStartRequest, ConformanceTestSession>(
             config.Selvbetjening.ConformanceSessionUri,
             request,
+            headers: ApiKeyHeader(config));
+    }
+
+    private static async Task<ConformanceTestSession> ResetSession(
+        Config config,
+        AuthHttpClient authHttpClient,
+        string sessionId
+    )
+    {
+        return await authHttpClient.Post<ConformanceTestSession>(
+            config.Selvbetjening.ResetSessionUri(sessionId),
+            headers: ApiKeyHeader(config));
+    }
+
+    private static async Task<ConformanceTestSession> GetSession(
+        Config config,
+        AuthHttpClient authHttpClient,
+        string sessionId
+    )
+    {
+        return await authHttpClient.Get<ConformanceTestSession>(
+            config.Selvbetjening.SessionUri(sessionId),
             headers: ApiKeyHeader(config));
     }
 
@@ -160,7 +259,7 @@ internal static class Program
             .Build();
 
         return configuration.Get<Config>()
-            ?? throw new Exception("Could not read appsettings.json");
+               ?? throw new Exception("Could not read appsettings.json");
     }
 
     private static async Task Out(string message)

@@ -1,14 +1,7 @@
-﻿namespace Takt.Models.Responses.ExternalApi;
+namespace Common.Models;
 
 public class LocalizedText
 {
-    /// <summary>
-    /// English
-    /// </summary>
-    public required string En { get; set; }
-
-    /// <summary>
-    /// Norwegian Bokmål
-    /// </summary>
-    public required string Nb { get; set; }
+    public required string En { get; init; }
+    public required string Nb { get; init; }
 }
