@@ -87,14 +87,10 @@ Put the values in `appsettings.Local.json` next to `appsettings.json`, which is 
   "Client": {
     "ClientId": "[PASTE here]",
     "Jwk": "[PASTE the private JWK here]",
-    "Scopes": [ "nhn:selvbetjening/client" ]
+    "Scopes": [ "[PASTE each scope you use here]" ]
   }
 }
 ```
-
-`nhn:selvbetjening/client` works as a default, but the test is most useful when the client requests
-the scopes your software really uses in production. Otherwise the test examines something other
-than what your software actually does.
 
 ## What the sample does
 
@@ -107,10 +103,14 @@ than what your software actually does.
    verdict and the checks behind it
 4. Prints each request the test observed, with the outcome of every check
 
-`Program.cs` also contains `RunOptionalSteps`, which is not called by default. It shows how to
-reset a session with `POST /v1/conformance-test-sessions/{sessionId}/reset` to test again without
-changing the authority configuration, for example after fixing your client, and how to fetch a
-session later with `GET /v1/conformance-test-sessions/{sessionId}`.
+`Program.cs` also has two examples for endpoints that are not required. They are off by default;
+set the constant at the top of the file to `true` to run one:
+
+- `EnableResetExample` resets the session with `POST /v1/conformance-test-sessions/{sessionId}/reset`,
+  runs the client again and ends the session. The session id and authority URI stay the same, so
+  you can test again, for example after fixing your client, without changing its configuration
+- `EnableGetExample` fetches the session with `GET /v1/conformance-test-sessions/{sessionId}`, for
+  reading the results at a later time. Sessions are not stored forever
 
 A warning prevents a test from passing, not only a failure. The same results are shown on the
 client system's `Samsvarstesting` tab in Selvbetjening for HelseID.
