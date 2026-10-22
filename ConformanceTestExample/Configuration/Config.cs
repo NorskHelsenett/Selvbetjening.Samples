@@ -21,7 +21,9 @@ internal class SelvbetjeningConfig
 
     public string ConformanceSessionUri => new Uri(new Uri(ApiUri), ConformanceSessionEndpoint).ToString();
 
-    public string EndSessionUri(string sessionId) => $"{ConformanceSessionUri}/{sessionId}/end";
+    public string SessionUri(string sessionId) => $"{ConformanceSessionUri}/{sessionId}";
+    public string EndSessionUri(string sessionId) => $"{SessionUri(sessionId)}/end";
+    public string ResetSessionUri(string sessionId) => $"{SessionUri(sessionId)}/reset";
 }
 
 /// <summary>

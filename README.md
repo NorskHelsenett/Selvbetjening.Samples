@@ -92,15 +92,25 @@ Put the values in `appsettings.Local.json` next to `appsettings.json`, which is 
 }
 ```
 
+`nhn:selvbetjening/client` works as a default, but the test is most useful when the client requests
+the scopes your software really uses in production. Otherwise the test examines something other
+than what your software actually does.
+
 ## What the sample does
 
 1. Starts a session with `POST /v1/conformance-test-sessions`, authenticating with the `api-key`
    header, and receives a session id and the authority URI to use
 2. Requests an access token with the client credentials grant against that authority — this is the
-   step being examined. Tokens issued by a session cannot be used against APIs
+   step being examined. Tokens issued by a session cannot be used against APIs. The session accepts
+   requests that HelseID would reject, so receiving a token does not mean the request was correct
 3. Ends the session with `POST /v1/conformance-test-sessions/{sessionId}/end`, which returns the
    verdict and the checks behind it
 4. Prints each request the test observed, with the outcome of every check
+
+`Program.cs` also contains `RunOptionalSteps`, which is not called by default. It shows how to
+reset a session with `POST /v1/conformance-test-sessions/{sessionId}/reset` to test again without
+changing the authority configuration, for example after fixing your client, and how to fetch a
+session later with `GET /v1/conformance-test-sessions/{sessionId}`.
 
 A warning prevents a test from passing, not only a failure. The same results are shown on the
 client system's `Samsvarstesting` tab in Selvbetjening for HelseID.

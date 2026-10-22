@@ -35,6 +35,15 @@ public class AuthHttpClient : IDisposable
         return await GetResponseMessage<TResponse>(response);
     }
 
+    public async Task<TResponse> Post<TResponse>(string uri, string? accessToken = null, IDictionary<string, string>? headers = null)
+    {
+        var requestMessage = CreateRequestMessage(uri, accessToken, headers, HttpMethod.Post);
+
+        var response = await _httpClient.SendAsync(requestMessage);
+
+        return await GetResponseMessage<TResponse>(response);
+    }
+
     public async Task Put<TRequest>(string uri, TRequest body, string? accessToken = null, IDictionary<string, string>? headers = null)
     {
         var requestMessage = CreateRequestMessage(uri, accessToken, headers, HttpMethod.Put);
@@ -114,7 +123,7 @@ public class AuthHttpClient : IDisposable
             IgnoreReadOnlyProperties = true,
         };
 
-        JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+        JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase));
     }
 
     private static readonly JsonSerializerOptions JsonSerializerOptions;

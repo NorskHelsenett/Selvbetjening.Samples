@@ -18,7 +18,7 @@ public class SystemAuthenticator : IDisposable
         _clientData = clientData;
         _httpClient = new HttpClient();
         _oidcConfigManager = new ConfigurationManager<OpenIdConnectConfiguration>(
-            $"{_clientData.Authority}/.well-known/openid-configuration",
+            $"{_clientData.Authority.TrimEnd('/')}/.well-known/openid-configuration",
             new OpenIdConnectConfigurationRetriever()
         );
     }
